@@ -53,13 +53,39 @@
             return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
         }
 
+        // Function to check if an image exists
+            function imageExists(url, callback) {
+            const img = new Image();
+            img.onload = () => callback(true);
+            img.onerror = () => callback(false);
+            img.src = url;
+        }
+
         // Set image sources based on URL parameters
         for (let i = 1; i <= 6; i++) {
             const imageName = getUrlParameter('pokemon' + i).toLowerCase();
+            const imgElement = document.getElementById('pokemon' + i);
             if (imageName) {
-                document.getElementById('pokemon' + i).src = 'assets/images/Pokemon/sprites/' + imageName + '.png';
+                let imagePath = 'assets/images/Pokemon/sprites/' + imageName + '.png';
+                if (imageName.endsWith('-f')) {
+                    imagePath = 'assets/images/Pokemon/sprites/female/' + imageName.replace('-f','') + '.png';
+                }
+                imageExists(imagePath, (exists) => {
+                    if (exists) {
+                        imgElement.src = imagePath;
+                    } else {
+                        const regularImagePath = 'assets/images/Pokemon/sprites/' + imageName.replace('-f', '') + '.png';
+                        imageExists(regularImagePath, (exists) => {
+                            if (exists) {
+                                imgElement.src = regularImagePath;
+                            } else {
+                                imgElement.alt = 'Image not Found';
+                            }
+                        });
+                    }
+                });
             } else if (i != 1 && !imageName) {
-                document.getElementById('pokemon' + i).style.display = 'none';
+                imgElement.style.display = 'none';
             }
             
         }
