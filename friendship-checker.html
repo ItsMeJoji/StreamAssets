@@ -55,8 +55,7 @@
 
         // Set image sources based on URL parameters
         for (let i = 1; i <= 6; i++) {
-            const imageName = getUrlParameter('pokemon' + i);
-            imageName = imageName.toLowerCase();
+            const imageName = getUrlParameter('pokemon' + i).toLowerCase();
             if (imageName) {
                 document.getElementById('pokemon' + i).src = 'assets/images/Pokemon/sprites/' + imageName + '.png';
             } else if (i != 1 && !imageName) {
