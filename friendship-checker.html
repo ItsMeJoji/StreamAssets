@@ -17,16 +17,26 @@
         width: 250px;
         height: auto;
         filter: grayscale(50%);
+        z-index: 1;
     }
-        .overlay {
+    .heart {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 255, 0.2); /* Blue-ish tint*/
-        pointer-events: none; /* Allow clicks to pass through for later use*/
-        }
+        width: 30px;
+        height: auto;
+        display: none;
+        filter: grayscale(25%);
+        z-index: 2;
+    }
+    .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 255, 0.2); /* Blue-ish tint*/
+    pointer-events: none; /* Allow clicks to pass through for later use*/
+    z-index: 3;
+    }
     </style>
 </head>
 <body>
@@ -44,6 +54,9 @@
         const container = document.getElementById('container');
         const images = document.querySelectorAll('.bouncingImage');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
+        const minInterval = 10000; // Minimum interval in milliseconds
+        const maxInterval = 60000; // Maximum interval in milliseconds
+
 
         // Function to get URL parameters
         function getUrlParameter(name) {
@@ -142,7 +155,49 @@
             requestAnimationFrame(updatePosition);
         }
 
+        function showHeartsForImage(img, index) {
+            if (img.style.display === 'none') return;
+
+            const heartCount = Math.floor(Math.random() * 5) + 1;
+            const hearts = [];
+
+            const imgCenterX = parseFloat(img.style.left) + img.width / 2;
+            const imgTopY = parseFloat(img.style.top);
+
+            for (let i = 0; i < heartCount; i++) {
+                const heart = document.createElement('img');
+                heart.src = 'assets/images/misc/heart.png';
+                heart.className = 'heart';
+                heart.style.left = `${imgCenterX - (heartCount * 15) + i * 30}px`;
+                heart.style.top = `${imgTopY + 50}px`;
+                heart.style.display = 'block';
+                container.appendChild(heart);
+                hearts.push(heart);
+            }
+
+            const originalVelocity = { ...velocities[index] };
+            velocities[index] = { x: 0, y: 0 }; // Stop the image
+
+            setTimeout(() => {
+                hearts.forEach((heart) => {
+                    heart.remove();
+                });
+                velocities[index] = originalVelocity; // Resume the image movement
+            }, 3000);
+
+            const nextInterval = Math.random() * (maxInterval - minInterval) + minInterval; // Random interval between minInterval and maxInterval
+            setTimeout(() => showHeartsForImage(img, index), nextInterval);
+        }
+
+        function startShowingHearts() {
+            images.forEach((img, index) => {
+                const initialInterval = Math.random() * (maxInterval - minInterval) + minInterval;
+                setTimeout(() => showHeartsForImage(img, index), initialInterval);
+            });
+        }
+
         updatePosition();
+        startShowingHearts();
     </script>
 </body>
 </html>
