@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing PNG</title>
+    <style>
+        #container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            border: 1px solid black;
+            overflow: hidden;
+        }
+        .bouncingImage {
+            position: absolute;
+            width: 150px; /* Adjust the size of the image as needed */
+            height: 150px; /* Adjust the size of the image as needed */
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <img class="bouncingImage" src="F:\Files\GitHub\ShinyPokemonBingoGenerator\images\Pokemon\HGSS\152.png" alt="Bouncing Image" style="left: 50px; top: 50px;">
+        <img class="bouncingImage" src="F:\Files\GitHub\ShinyPokemonBingoGenerator\images\Pokemon\HGSS\155.png" alt="Bouncing Image" style="left: 1130px; top: 50px;">
+        <img class="bouncingImage" src="F:\Files\GitHub\ShinyPokemonBingoGenerator\images\Pokemon\HGSS\158.png" alt="Bouncing Image" style="left: 50px; top: 570px;">
+        <img class="bouncingImage" src="F:\Files\GitHub\ShinyPokemonBingoGenerator\images\Pokemon\HGSS\160.png" alt="Bouncing Image" style="left: 1130px; top: 570px;">
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const images = document.querySelectorAll('.bouncingImage');
+
+        const velocities = Array.from(images).map(() => ({
+            x: (Math.random() * 4 - 2) * 0.75, // Reduce velocity by 25%
+            y: (Math.random() * 4 - 2) * 0.75  // Reduce velocity by 25%
+        }));
+
+        function updatePosition() {
+            images.forEach((img, index) => {
+                let posX = parseFloat(img.style.left) || 0;
+                let posY = parseFloat(img.style.top) || 0;
+
+                posX += velocities[index].x;
+                posY += velocities[index].y;
+
+                if (posX + img.width >= container.clientWidth || posX <= 0) {
+                    velocities[index].x = -velocities[index].x;
+                }
+                if (posY + img.height >= container.clientHeight || posY <= 0) {
+                    velocities[index].y = -velocities[index].y;
+                }
+
+                images.forEach((otherImg, otherIndex) => {
+                    if (index !== otherIndex) {
+                        const otherPosX = parseFloat(otherImg.style.left) || 0;
+                        const otherPosY = parseFloat(otherImg.style.top) || 0;
+
+                        // Define smaller collision area (20x20px) centered within each image
+                        const collisionSize = 20;
+                        const halfCollisionSize = collisionSize / 2;
+
+                        const imgCenterX = posX + img.width / 2;
+                        const imgCenterY = posY + img.height / 2;
+                        const otherImgCenterX = otherPosX + otherImg.width / 2;
+                        const otherImgCenterY = otherPosY + otherImg.height / 2;
+
+                        if (Math.abs(imgCenterX - otherImgCenterX) < collisionSize &&
+                            Math.abs(imgCenterY - otherImgCenterY) < collisionSize) {
+                            velocities[index].x = -velocities[index].x;
+                            velocities[index].y = -velocities[index].y;
+                            velocities[otherIndex].x = -velocities[otherIndex].x;
+                            velocities[otherIndex].y = -velocities[otherIndex].y;
+                        }
+                    }
+                });
+
+                img.style.left = posX + 'px';
+                img.style.top = posY + 'px';
+            });
+
+            requestAnimationFrame(updatePosition);
+        }
+
+        updatePosition();
+    </script>
+</body>
+</html>
