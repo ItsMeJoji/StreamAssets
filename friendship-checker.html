@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing PNG</title>
+    <style>
+    #container {
+        width: 1012px;
+        height: 759px;
+        position: relative;
+        border: 1px solid black;
+        overflow: hidden;
+    }
+    .bouncingImage {
+        position: absolute;
+        width: 250px;
+        height: auto;
+        filter: grayscale(50%);
+    }
+        .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 255, 0.2); /* Blue-ish tint*/
+        pointer-events: none; /* Allow clicks to pass through for later use*/
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <img class="bouncingImage" id="pokemon1" alt="Remember to set at least the first image in url. Ex. '../friendship-checker.html?pokemon1=blastoise&pokemon2=...'" style="left: 50px; top: 50px;">
+        <img class="bouncingImage" id="pokemon2" alt="Bouncing Image" style="left: 750px; top: 50px;">
+        <img class="bouncingImage" id="pokemon3" alt="Bouncing Image" style="left: 50px; top: 250px;">
+        <img class="bouncingImage" id="pokemon4" alt="Bouncing Image" style="left: 750px; top: 250px;">
+        <img class="bouncingImage" id="pokemon5" alt="Bouncing Image" style="left: 50px; top: 450px;">
+        <img class="bouncingImage" id="pokemon6" alt="Bouncing Image" style="left: 750px; top: 450px;">
+        <div class="overlay"></div>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const images = document.querySelectorAll('.bouncingImage');
+        const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Set image sources based on URL parameters
+        for (let i = 1; i <= 6; i++) {
+            const imageName = getUrlParameter('pokemon' + i);
+            if (imageName) {
+                document.getElementById('pokemon' + i).src = 'assets/images/Pokemon/sprites/' + imageName + '.png';
+            } else if (i != 1 && !imageName) {
+                document.getElementById('pokemon' + i).style.display = 'none';
+            }
+            
+        }
+
+
+        const velocities = Array.from(images).map(() => ({
+            x: (Math.random() * 4 - 2) * speedAdjust,
+            y: (Math.random() * 4 - 2) * speedAdjust  
+        }));
+
+        function updatePosition() {
+            images.forEach((img, index) => {
+                let posX = parseFloat(img.style.left) || 0;
+                let posY = parseFloat(img.style.top) || 0;
+
+                posX += velocities[index].x;
+                posY += velocities[index].y;
+
+                if (posX + img.width >= container.clientWidth || posX <= 0) {
+                    velocities[index].x = -velocities[index].x;
+                }
+                if (posY + img.height >= container.clientHeight || posY <= 0) {
+                    velocities[index].y = -velocities[index].y;
+                }
+
+                images.forEach((otherImg, otherIndex) => {
+                    if (index !== otherIndex) {
+                        const otherPosX = parseFloat(otherImg.style.left) || 0;
+                        const otherPosY = parseFloat(otherImg.style.top) || 0;
+
+                        // Define smaller collision area (20x20px) centered within each image
+                        const collisionSize = 50;
+                        const halfCollisionSize = collisionSize / 2;
+
+                        const imgCenterX = posX + img.width / 2;
+                        const imgCenterY = posY + img.height / 2;
+                        const otherImgCenterX = otherPosX + otherImg.width / 2;
+                        const otherImgCenterY = otherPosY + otherImg.height / 2;
+
+                        if (Math.abs(imgCenterX - otherImgCenterX) < collisionSize &&
+                            Math.abs(imgCenterY - otherImgCenterY) < collisionSize) {
+                            velocities[index].x = -velocities[index].x;
+                            velocities[index].y = -velocities[index].y;
+                            velocities[otherIndex].x = -velocities[otherIndex].x;
+                            velocities[otherIndex].y = -velocities[otherIndex].y;
+                        }
+                    }
+                });
+
+                img.style.left = posX + 'px';
+                img.style.top = posY + 'px';
+            });
+
+            requestAnimationFrame(updatePosition);
+        }
+
+        updatePosition();
+    </script>
+</body>
+</html>
