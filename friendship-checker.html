@@ -33,7 +33,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 255, 0.2); /* Blue-ish tint*/
+    background-color: rgba(0, 0, 255, 0.15); /* Blue-ish tint*/
     pointer-events: none; /* Allow clicks to pass through for later use*/
     z-index: 3;
     }
@@ -79,15 +79,19 @@
             const imageName = getUrlParameter('pokemon' + i).toLowerCase();
             const imgElement = document.getElementById('pokemon' + i);
             if (imageName) {
-                let imagePath = 'assets/images/Pokemon/sprites/' + imageName + '.png';
-                if (imageName.endsWith('-f')) {
-                    imagePath = 'assets/images/Pokemon/sprites/female/' + imageName.replace('-f','') + '.png';
+                let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
+                if (imageName.endsWith('-f-s')) {
+                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.replace('-f-s','') + '.png';
+                } else if (imageName.endsWith('-f')) {
+                    imagePath = 'assets/images/Pokemon/female/' + imageName.replace('-f','') + '.png';
+                } else if (imageName.endsWith('-s')) {
+                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.replace('-s','') + '.png';
                 }
                 imageExists(imagePath, (exists) => {
                     if (exists) {
                         imgElement.src = imagePath;
                     } else {
-                        const regularImagePath = 'assets/images/Pokemon/sprites/' + imageName.replace('-f', '') + '.png';
+                        const regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-f', '') + '.png';
                         imageExists(regularImagePath, (exists) => {
                             if (exists) {
                                 imgElement.src = regularImagePath;
@@ -197,7 +201,11 @@
         }
 
         updatePosition();
-        startShowingHearts();
+
+        const showHearts = getUrlParameter('friendship');
+        if (showHearts === 'true') {
+            startShowingHearts();
+        }
     </script>
 </body>
 </html>
