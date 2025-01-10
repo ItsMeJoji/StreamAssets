@@ -70,9 +70,34 @@
             return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
         }
 
-        const clientId = getUrlParameter('client_id');
-        const redirectUri = getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-        const username = getUrlParameter('username');
+        // Function to store URL parameters in local storage
+        function storeUrlParameters() {
+            const params = ['client_id', 'redirect_uri', 'username'];
+            params.forEach(param => {
+                const value = getUrlParameter(param);
+                if (value) {
+                    localStorage.setItem(param, value);
+                }
+            });
+        }
+
+        // Function to retrieve URL parameters from local storage
+        function retrieveUrlParameters() {
+            const params = ['client_id', 'redirect_uri', 'username'];
+            const result = {};
+            params.forEach(param => {
+                const value = localStorage.getItem(param);
+                if (value) {
+                    result[param] = value;
+                }
+            });
+            return result;
+        }
+
+        const urlParams = retrieveUrlParameters();
+        const clientId = urlParams.client_id || getUrlParameter('client_id');
+        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://your-username.github.io/your-repo-name/parasocial-checker.html';
+        const username = urlParams.username || getUrlParameter('username');
 
         // Function to check if an image exists
         function imageExists(url, callback) {
@@ -167,6 +192,7 @@
         }
 
         function authenticate() {
+            storeUrlParameters();
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read`;
             window.location.href = authUrl;
         }
