@@ -72,7 +72,7 @@
 
         // Function to store URL parameters in local storage
         function storeUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username'];
+            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
             params.forEach(param => {
                 const value = getUrlParameter(param);
                 if (value) {
@@ -83,7 +83,7 @@
 
         // Function to retrieve URL parameters from local storage
         function retrieveUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username'];
+            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
             const result = {};
             params.forEach(param => {
                 const value = localStorage.getItem(param);
@@ -273,8 +273,8 @@
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
-            fetchChannelId(username, accessToken)
-                .then(channelId => fetchChatUsers(channelId, accessToken))
+            Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
+                .then(([channelId, moderatorId]) => fetchChatUsers(channelId, moderatorId, accessToken))
                 .catch(error => console.error(error));
         } else {
             authenticate();
