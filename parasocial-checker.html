@@ -72,7 +72,7 @@
 
         // Function to store URL parameters in local storage
         function storeUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username'];
+            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
             params.forEach(param => {
                 const value = getUrlParameter(param);
                 if (value) {
@@ -83,7 +83,7 @@
 
         // Function to retrieve URL parameters from local storage
         function retrieveUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username'];
+            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
             const result = {};
             params.forEach(param => {
                 const value = localStorage.getItem(param);
@@ -108,6 +108,7 @@
         const clientId = urlParams.client_id || getUrlParameter('client_id');
         const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
         const username = urlParams.username || getUrlParameter('username');
+        const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
         // Function to check if an image exists
         function imageExists(url, callback) {
@@ -203,7 +204,7 @@
 
         function authenticate() {
             storeUrlParameters();
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read`;
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+moderator:read:chatters`;
             window.location.href = authUrl;
         }
 
@@ -229,13 +230,30 @@
             }
         }
 
-        async function fetchChatUsers(channelId, accessToken) {
-            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}&moderator_id=${channelId}`, {
+        async function fetchModeratorId(moderatorUsername, accessToken) {
+            const response = await fetch(`https://api.twitch.tv/helix/users?login=${moderatorUsername}`, {
                 headers: {
                     'Client-ID': clientId,
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
+
+            const data = await response.json();
+            if (data.data && data.data.length > 0) {
+                return data.data[0].id;
+            } else {
+                throw new Error('Moderator not found');
+            }
+        }
+
+        async function fetchChatUsers(channelId, moderatorId, accessToken) {
+            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}&moderator_id=${moderatorId}`, {
+                headers: {
+                    'Client-ID': clientId,
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error fetching chat users:', response.status, errorData);
@@ -256,8 +274,8 @@
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
-            fetchChannelId(username, accessToken)
-                .then(channelId => fetchChatUsers(channelId, accessToken))
+            Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
+                .then(([channelId, moderatorId]) => fetchChatUsers(channelId, moderatorId, accessToken))
                 .catch(error => console.error(error));
         } else {
             authenticate();
