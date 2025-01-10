@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friendship Checker Poketch App</title>
+    <style>
+    #container {
+        width: 1012px;
+        height: 759px;
+        position: relative;
+        border: 1px solid black;
+        overflow: hidden;
+    }
+    .bouncingImage {
+        position: absolute;
+        width: 250px;
+        height: auto;
+        filter: grayscale(50%);
+        z-index: 1;
+    }
+    .username {
+        position: absolute;
+        width: 250px;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        z-index: 2;
+    }
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 255, 0.2); /* Blue-ish tint */
+        pointer-events: none; /* Allow clicks to pass through */
+        z-index: 0;
+    }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <img class="bouncingImage" id="pokemon1" alt="Pokemon 1" style="left: 50px; top: 50px;">
+        <div class="username" id="username1" style="left: 50px; top: 20px;">Username 1</div>
+        <img class="bouncingImage" id="pokemon2" alt="Pokemon 2" style="left: 750px; top: 50px;">
+        <div class="username" id="username2" style="left: 750px; top: 20px;">Username 2</div>
+        <img class="bouncingImage" id="pokemon3" alt="Pokemon 3" style="left: 50px; top: 250px;">
+        <div class="username" id="username3" style="left: 50px; top: 220px;">Username 3</div>
+        <img class="bouncingImage" id="pokemon4" alt="Pokemon 4" style="left: 750px; top: 250px;">
+        <div class="username" id="username4" style="left: 750px; top: 220px;">Username 4</div>
+        <img class="bouncingImage" id="pokemon5" alt="Pokemon 5" style="left: 50px; top: 450px;">
+        <div class="username" id="username5" style="left: 50px; top: 420px;">Username 5</div>
+        <img class="bouncingImage" id="pokemon6" alt="Pokemon 6" style="left: 750px; top: 450px;">
+        <div class="username" id="username6" style="left: 750px; top: 420px;">Username 6</div>
+        <div class="overlay"></div>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const images = document.querySelectorAll('.bouncingImage');
+        const usernames = document.querySelectorAll('.username');
+        const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        const clientId = getUrlParameter('client_id');
+        const redirectUri = getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        const username = getUrlParameter('username');
+
+        // Function to check if an image exists
+        function imageExists(url, callback) {
+            const img = new Image();
+            img.onload = () => callback(true);
+            img.onerror = () => callback(false);
+            img.src = url;
+        }
+
+        // Set image sources based on URL parameters and hide images if no parameter is provided
+        for (let i = 1; i <= 6; i++) {
+            const imageName = getUrlParameter('pokemon' + i);
+            const imgElement = document.getElementById('pokemon' + i);
+            if (imageName) {
+                let imagePath = 'assets/images/Pokemon/sprites/' + imageName + '.png';
+                if (imageName.endsWith('-f')) {
+                    imagePath = 'assets/images/Pokemon/sprites/female/' + imageName.replace('-f','') + '.png';
+                }
+                imageExists(imagePath, (exists) => {
+                    if (exists) {
+                        imgElement.src = imagePath;
+                    } else {
+                        const regularImagePath = 'assets/images/Pokemon/sprites/' + imageName.replace('-f', '') + '.png';
+                        imageExists(regularImagePath, (exists) => {
+                            if (exists) {
+                                imgElement.src = regularImagePath;
+                            } else {
+                                imgElement.alt = 'Image not Found';
+                            }
+                        });
+                    }
+                });
+            } else {
+                imgElement.style.display = 'none';
+                document.getElementById('username' + i).style.display = 'none';
+            }
+        }
+
+        const velocities = Array.from(images).map(() => ({
+            x: (Math.random() * 4 - 2) * speedAdjust,
+            y: (Math.random() * 4 - 2) * speedAdjust  
+        }));
+
+        function updatePosition() {
+            images.forEach((img, index) => {
+                if (img.style.display === 'none') return;
+
+                let posX = parseFloat(img.style.left) || 0;
+                let posY = parseFloat(img.style.top) || 0;
+
+                posX += velocities[index].x;
+                posY += velocities[index].y;
+
+                if (posX + img.width >= container.clientWidth || posX <= 0) {
+                    velocities[index].x = -velocities[index].x;
+                }
+                if (posY + img.height >= container.clientHeight || posY <= 0) {
+                    velocities[index].y = -velocities[index].y;
+                }
+
+                images.forEach((otherImg, otherIndex) => {
+                    if (index !== otherIndex && otherImg.style.display !== 'none') {
+                        const otherPosX = parseFloat(otherImg.style.left) || 0;
+                        const otherPosY = parseFloat(otherImg.style.top) || 0;
+
+                        // Define smaller collision area (20x20px) centered within each image
+                        const collisionSize = 50;
+                        const halfCollisionSize = collisionSize / 2;
+
+                        const imgCenterX = posX + img.width / 2;
+                        const imgCenterY = posY + img.height / 2;
+                        const otherImgCenterX = otherPosX + otherImg.width / 2;
+                        const otherImgCenterY = otherPosY + otherImg.height / 2;
+
+                        if (Math.abs(imgCenterX - otherImgCenterX) < collisionSize &&
+                            Math.abs(imgCenterY - otherImgCenterY) < collisionSize) {
+                            velocities[index].x = -velocities[index].x;
+                            velocities[index].y = -velocities[index].y;
+                            velocities[otherIndex].x = -velocities[otherIndex].x;
+                            velocities[otherIndex].y = -velocities[otherIndex].y;
+                        }
+                    }
+                });
+
+                img.style.left = posX + 'px';
+                img.style.top = posY + 'px';
+                usernames[index].style.left = `${posX}px`;
+                usernames[index].style.top = `${posY - 30}px`;
+            });
+
+            requestAnimationFrame(updatePosition);
+        }
+
+        function authenticate() {
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read`;
+            window.location.href = authUrl;
+        }
+
+        function getAccessTokenFromUrl() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            return params.get('access_token');
+        }
+
+        async function fetchChannelId(username, accessToken) {
+            const response = await fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
+                headers: {
+                    'Client-ID': clientId,
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const data = await response.json();
+            if (data.data && data.data.length > 0) {
+                return data.data[0].id;
+            } else {
+                throw new Error('Channel not found');
+            }
+        }
+
+        async function fetchChatUsers(channelId, accessToken) {
+            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}`, {
+                headers: {
+                    'Client-ID': clientId,
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            const data = await response.json();
+            const chatters = data.data;
+
+            chatters.slice(0, 6).forEach((chatter, index) => {
+                const usernameElement = document.getElementById(`username${index + 1}`);
+                if (usernameElement) {
+                    usernameElement.textContent = chatter.user_name;
+                }
+            });
+        }
+
+        const accessToken = getAccessTokenFromUrl();
+        if (accessToken) {
+            fetchChannelId(username, accessToken)
+                .then(channelId => fetchChatUsers(channelId, accessToken))
+                .catch(error => console.error(error));
+        } else {
+            authenticate();
+        }
+
+        updatePosition();
+    </script>
+</body>
+</html>
