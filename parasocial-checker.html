@@ -204,7 +204,7 @@
 
         function authenticate() {
             storeUrlParameters();
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read`;
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read:chatters`;
             window.location.href = authUrl;
         }
 
