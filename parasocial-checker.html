@@ -230,7 +230,7 @@
         }
 
         async function fetchChatUsers(channelId, accessToken) {
-            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}`, {
+            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}&moderator_id=${channelId}`, {
                 headers: {
                     'Client-ID': clientId,
                     'Authorization': `Bearer ${accessToken}`
