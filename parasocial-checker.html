@@ -94,6 +94,16 @@
             return result;
         }
 
+        // Function to store access token in local storage
+        function storeAccessToken(token) {
+            localStorage.setItem('access_token', token);
+        }
+
+        // Function to retrieve access token from local storage
+        function retrieveAccessToken() {
+            return localStorage.getItem('access_token');
+        }
+
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
         const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://your-username.github.io/your-repo-name/parasocial-checker.html';
@@ -238,8 +248,9 @@
             });
         }
 
-        const accessToken = getAccessTokenFromUrl();
+        const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
+            storeAccessToken(accessToken);
             fetchChannelId(username, accessToken)
                 .then(channelId => fetchChatUsers(channelId, accessToken))
                 .catch(error => console.error(error));
