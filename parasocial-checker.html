@@ -236,6 +236,11 @@
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error fetching chat users:', response.status, errorData);
+                throw new Error(`Error fetching chat users: ${response.status}`);
+            }
 
             const data = await response.json();
             const chatters = data.data;
