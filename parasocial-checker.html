@@ -72,7 +72,7 @@
 
         // Function to store URL parameters in local storage
         function storeUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
+            const params = ['client_id', 'redirect_uri', 'username'];
             params.forEach(param => {
                 const value = getUrlParameter(param);
                 if (value) {
@@ -83,7 +83,7 @@
 
         // Function to retrieve URL parameters from local storage
         function retrieveUrlParameters() {
-            const params = ['client_id', 'redirect_uri', 'username', 'moderator_username'];
+            const params = ['client_id', 'redirect_uri', 'username'];
             const result = {};
             params.forEach(param => {
                 const value = localStorage.getItem(param);
@@ -204,7 +204,7 @@
 
         function authenticate() {
             storeUrlParameters();
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+moderator:read:chatters`;
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read`;
             window.location.href = authUrl;
         }
 
@@ -245,15 +245,14 @@
                 throw new Error('Moderator not found');
             }
         }
-
-        async function fetchChatUsers(channelId, moderatorId, accessToken) {
-            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}&moderator_id=${moderatorId}`, {
+        
+        async function fetchChatUsers(channelId, accessToken) {
+            const response = await fetch(`https://api.twitch.tv/helix/chat/chatters?broadcaster_id=${channelId}&moderator_id=${channelId}`, {
                 headers: {
                     'Client-ID': clientId,
                     'Authorization': `Bearer ${accessToken}`
                 }
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error fetching chat users:', response.status, errorData);
@@ -274,8 +273,8 @@
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
-            Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
-                .then(([channelId, moderatorId]) => fetchChatUsers(channelId, moderatorId, accessToken))
+            fetchChannelId(username, accessToken)
+                .then(channelId => fetchChatUsers(channelId, accessToken))
                 .catch(error => console.error(error));
         } else {
             authenticate();
