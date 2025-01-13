@@ -106,7 +106,7 @@
 
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
-        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html';
         const username = urlParams.username || getUrlParameter('username');
         const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
@@ -118,9 +118,15 @@
             img.src = url;
         }
 
+        function getRandomPokemon(){
+            randomIndex = Math.floor(Math.random() * 898) + 1;
+            // return availablePokemon[randomIndex];
+            return 'pikachu';
+        }
+
         // Set image sources based on URL parameters and hide images if no parameter is provided
         for (let i = 1; i <= 6; i++) {
-            const imageName = getUrlParameter('pokemon' + i);
+            const imageName = getRandomPokemon();
             const imgElement = document.getElementById('pokemon' + i);
             if (imageName) {
                 let imagePath = 'assets/images/Pokemon/sprites/' + imageName + '.png';
