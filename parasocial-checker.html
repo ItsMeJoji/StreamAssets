@@ -26,6 +26,7 @@
         color: white;
         font-weight: bold;
         z-index: 2;
+        text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
     }
     .overlay {
         position: absolute;
@@ -56,6 +57,7 @@
         <div class="overlay"></div>
     </div>
 
+    <script src="assets/js/arrays.js"></script>
     <script>
         const container = document.getElementById('container');
         const images = document.querySelectorAll('.bouncingImage');
@@ -120,33 +122,85 @@
 
         function getRandomPokemon(){
             randomIndex = Math.floor(Math.random() * 898) + 1;
-            // return availablePokemon[randomIndex];
-            return 'pikachu';
+            return availablePokemon[randomIndex];
+            //return 'pikachu';
         }
 
         // Set image sources based on URL parameters and hide images if no parameter is provided
         for (let i = 1; i <= 6; i++) {
-            const imageName = getRandomPokemon();
+            imageName = getRandomPokemon();
             const imgElement = document.getElementById('pokemon' + i);
             if (imageName) {
-                let imagePath = 'assets/images/Pokemon/sprites/' + imageName + '.png';
-                if (imageName.endsWith('-f')) {
-                    imagePath = 'assets/images/Pokemon/sprites/female/' + imageName.replace('-f','') + '.png';
+                
+                //Gender Check
+                // genderCheck = Math.floor(Math.random() * 100) + 1;
+                // if (genderCheck <= 25) {
+                //     imageName = imageName + '-f';
+                // }
+
+                //Shiny Check
+                const MAX_RANGE = 5;
+
+                function getRandomNumber(max) {
+                    return Math.floor(Math.random() * max) + 1;
                 }
-                imageExists(imagePath, (exists) => {
-                    if (exists) {
-                        imgElement.src = imagePath;
+                const randomNumber1 = getRandomNumber(MAX_RANGE);
+                const randomNumber2 = getRandomNumber(MAX_RANGE);
+                console.log(randomNumber1, randomNumber2);
+                if (randomNumber1 === randomNumber2) {
+                    imageName = imageName + '-s';
+                }
+
+
+                function imageExists(imagePath, modifier) {
+                    if (imagePath) {
+                        return imagePath;
                     } else {
-                        const regularImagePath = 'assets/images/Pokemon/sprites/' + imageName.replace('-f', '') + '.png';
-                        imageExists(regularImagePath, (exists) => {
-                            if (exists) {
-                                imgElement.src = regularImagePath;
-                            } else {
-                                imgElement.alt = 'Image not Found';
-                            }
-                        });
+                        return regularImagePath = 'assets/images/Pokemon/' + imageName.replace(modifier, '') + '.png';
                     }
-                });
+                }
+
+                let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
+                if (imageName.endsWith('-f-s')) {
+                    modifier = '-f-s';
+                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.replace('-f-s','') + '.png';
+                    imagePath = imageExists(imagePath, modifier);
+                    imgElement.src = imagePath;
+                } else if (imageName.endsWith('-f')) {
+                    modifier = '-f';
+                    imagePath = 'assets/images/Pokemon/female/' + imageName.replace('-f','') + '.png';
+                    imagePath = imageExists(imagePath, modifier);
+                    imgElement.src = imagePath;
+                } else if (imageName.endsWith('-s')) {
+                    modifier = '-s';
+                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.replace('-s','') + '.png';
+                    imagePath = imageExists(imagePath, modifier);
+                    imgElement.src = imagePath;
+                } else {
+                    imgElement.src = imagePath;
+                }
+                // imageExists(imagePath, (exists) => {
+                //     if (exists) {
+                //         imgElement.src = imagePath;
+                //     } else {
+                //         regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-f', '') + '.png';
+                //         imageExists(regularImagePath, (exists) => {
+                //             if (exists) {
+                //                 imgElement.src = regularImagePath;
+                //             } else {
+                //                 regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-s', '') + '.png';
+                //                 imageExists(regularImagePath, (exists) => {
+                //                     if (exists) {
+                //                         imgElement.src = regularImagePath;
+                //                     } else {
+                //                         imgElement.alt = 'Image not Found';
+                //                     }
+                //                 });
+                //             }
+                //         });
+                //     }
+                // });
+                console.log(imageName);
             } else {
                 imgElement.style.display = 'none';
                 document.getElementById('username' + i).style.display = 'none';
@@ -202,7 +256,7 @@
                 img.style.left = posX + 'px';
                 img.style.top = posY + 'px';
                 usernames[index].style.left = `${posX}px`;
-                usernames[index].style.top = `${posY - 30}px`;
+                usernames[index].style.top = `${posY + img.height}px`;
             });
 
             requestAnimationFrame(updatePosition);

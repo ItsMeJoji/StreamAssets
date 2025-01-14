@@ -1,8 +1,8 @@
-/*
-	Spectral by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
-*/
+const version = '0.4.0';
+
+$(document).ready(function() {
+    $('#footer h6').html(`Version ${version} - Created by <a href="https://itsmejoji.com" target="_blank">ItsMeJoji</a><br/>Images are from the official Pokémon games and are used for non-commercial purposes.`);
+});
 
 (function($) {
 
