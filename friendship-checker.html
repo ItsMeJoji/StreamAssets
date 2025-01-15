@@ -47,12 +47,13 @@
         <img class="bouncingImage" id="pokemon4" alt="Bouncing Image" style="left: 750px; top: 250px;">
         <img class="bouncingImage" id="pokemon5" alt="Bouncing Image" style="left: 50px; top: 450px;">
         <img class="bouncingImage" id="pokemon6" alt="Bouncing Image" style="left: 750px; top: 450px;">
-        <div class="overlay"></div>
+        <div class="overlay" id="overlay"></div>
     </div>
 
     <script>
         const container = document.getElementById('container');
         const images = document.querySelectorAll('.bouncingImage');
+        const overlay = document.getElementById('overlay');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
         const minInterval = 10000; // Minimum interval in milliseconds
         const maxInterval = 60000; // Maximum interval in milliseconds
@@ -205,6 +206,11 @@
         const showHearts = getUrlParameter('friendship');
         if (showHearts === 'true') {
             startShowingHearts();
+        }
+
+        const showOverlay = getUrlParameter('overlay');
+        if (showOverlay === 'false') {
+            overlay.style.display = 'none';
         }
     </script>
 </body>
