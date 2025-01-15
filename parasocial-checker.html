@@ -28,6 +28,15 @@
         z-index: 2;
         text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
     }
+    .message {
+        position: absolute;
+        width: 250px;
+        text-align: center;
+        color: yellow;
+        font-weight: bold;
+        z-index: 3;
+        text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+    }
     .overlay {
         position: absolute;
         top: 0;
@@ -46,9 +55,11 @@
     </div>
     
 
-    <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
+    <script src="assets/js/tmi.min.js"></script>
     <script src="assets/js/arrays.js"></script>
     <script>
+
+
         const container = document.getElementById('container');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
         const padding = 50; // Padding from the edges and between elements
@@ -98,7 +109,7 @@
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
         const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'localhost:3000/parasocial-checker.html';
+        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
         const username = urlParams.username || getUrlParameter('username');
         const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
@@ -327,29 +338,7 @@
             createPokemonAndUsernames(chatters);
         
 
-            // Connect to Twitch chat
-            const client = new tmi.Client({
-                options: { debug: true },
-                identity: {
-                    username: username,
-                    password: `oauth:${accessToken}`
-                },
-                channels: [username]
-            });
 
-            client.connect();
-
-            client.on('message', (channel, tags, message, self) => {
-                // Display the message above the corresponding Pokémon
-                const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
-                if (usernameIndex !== -1) {
-                    const messageElement = document.getElementById(`message${usernameIndex + 1}`);
-                    messageElement.textContent = message;
-                    setTimeout(() => {
-                        messageElement.textContent = '';
-                    }, 5000); // Clear the message after 5 seconds
-                }
-            });
         }
 
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
@@ -358,6 +347,53 @@
             Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
                 .then(([channelId, moderatorId]) => {
                     fetchChatUsers(channelId, moderatorId, accessToken);
+
+                    const chatters = []; // Initialize chatters as an empty array
+
+                    const client = new tmi.Client({
+                        options: { debug: true },
+                        identity: {
+                            username: username,
+                            password: `oauth:${accessToken}`
+                        },
+                        channels: [username]
+                    });
+
+                    client.connect();
+
+                    // Listen to messages
+                    client.on('message', (channel, tags, message, self) => {
+                        // Ensure the user is in the chatters array
+                        if (!chatters.some(chatter => chatter.user_name === tags.username)) {
+                            chatters.push({ user_name: tags.username });
+                        }
+
+                        // Display the message above the corresponding Pokémon
+                        const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
+                        if (usernameIndex !== -1) {
+                            const messageElement = document.getElementById(`message${usernameIndex + 1}`);
+                            messageElement.textContent = message;
+
+                            setTimeout(() => {
+                                messageElement.textContent = '';
+                            }, 5000); // Clear the message after 5 seconds
+                        }
+                    });
+
+                    // Listen to users joining the channel
+                    client.on('join', (channel, username, self) => {
+                        if (!chatters.some(chatter => chatter.user_name === username)) {
+                            chatters.push({ user_name: username });
+                        }
+                    });
+
+                    // Listen to users leaving the channel
+                    client.on('part', (channel, username, self) => {
+                        const index = chatters.findIndex(chatter => chatter.user_name === username);
+                        if (index !== -1) {
+                            chatters.splice(index, 1); // Remove the user from chatters array
+                        }
+                    });
                 })
                 .catch(error => console.error(error));
         } else {
