@@ -42,27 +42,15 @@
 </head>
 <body>
     <div id="container">
-        <img class="bouncingImage" id="pokemon1" alt="Pokemon 1" style="left: 50px; top: 50px;">
-        <div class="username" id="username1" style="left: 50px; top: 20px;">Username 1</div>
-        <img class="bouncingImage" id="pokemon2" alt="Pokemon 2" style="left: 750px; top: 50px;">
-        <div class="username" id="username2" style="left: 750px; top: 20px;">Username 2</div>
-        <img class="bouncingImage" id="pokemon3" alt="Pokemon 3" style="left: 50px; top: 250px;">
-        <div class="username" id="username3" style="left: 50px; top: 220px;">Username 3</div>
-        <img class="bouncingImage" id="pokemon4" alt="Pokemon 4" style="left: 750px; top: 250px;">
-        <div class="username" id="username4" style="left: 750px; top: 220px;">Username 4</div>
-        <img class="bouncingImage" id="pokemon5" alt="Pokemon 5" style="left: 50px; top: 450px;">
-        <div class="username" id="username5" style="left: 50px; top: 420px;">Username 5</div>
-        <img class="bouncingImage" id="pokemon6" alt="Pokemon 6" style="left: 750px; top: 450px;">
-        <div class="username" id="username6" style="left: 750px; top: 420px;">Username 6</div>
-        <div class="overlay"></div>
+        <!-- <div class="overlay"></div> -->
     </div>
+    
 
     <script src="assets/js/arrays.js"></script>
     <script>
         const container = document.getElementById('container');
-        const images = document.querySelectorAll('.bouncingImage');
-        const usernames = document.querySelectorAll('.username');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
+        const padding = 50; // Padding from the edges and between elements
 
         // Function to get URL parameters
         function getUrlParameter(name) {
@@ -120,99 +108,101 @@
             img.src = url;
         }
 
-        function getRandomPokemon(){
-            randomIndex = Math.floor(Math.random() * 898) + 1;
+        function getRandomPokemon() {
+            const randomIndex = Math.floor(Math.random() * availablePokemon.length);
             return availablePokemon[randomIndex];
-            //return 'pikachu';
         }
 
-        // Set image sources based on URL parameters and hide images if no parameter is provided
-        for (let i = 1; i <= 6; i++) {
-            imageName = getRandomPokemon();
-            const imgElement = document.getElementById('pokemon' + i);
-            if (imageName) {
-                
-                //Gender Check
-                // genderCheck = Math.floor(Math.random() * 100) + 1;
-                // if (genderCheck <= 25) {
-                //     imageName = imageName + '-f';
-                // }
+        // Function to create and append Pokémon images and usernames
+        function createPokemonAndUsernames(chatters) {
+            let index = 0;
 
-                //Shiny Check
+            function addPokemon() {
+                if (index >= chatters.length) {
+                    return;
+                }
+
+                let imageName = getRandomPokemon();
+                const imgElement = document.createElement('img');
+                imgElement.className = 'bouncingImage';
+                imgElement.id = `pokemon${index + 1}`;
+                imgElement.alt = `Pokemon ${index + 1}`;
+
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'username';
+                usernameElement.id = `username${index + 1}`;
+                usernameElement.textContent = chatters[index].user_name;
+
+                container.appendChild(imgElement);
+                container.appendChild(usernameElement);
+
+                // Shiny Check
                 const MAX_RANGE = 5;
-
                 function getRandomNumber(max) {
                     return Math.floor(Math.random() * max) + 1;
                 }
                 const randomNumber1 = getRandomNumber(MAX_RANGE);
                 const randomNumber2 = getRandomNumber(MAX_RANGE);
-                console.log(randomNumber1, randomNumber2);
                 if (randomNumber1 === randomNumber2) {
                     imageName = imageName + '-s';
                 }
-
 
                 function imageExists(imagePath, modifier) {
                     if (imagePath) {
                         return imagePath;
                     } else {
-                        return regularImagePath = 'assets/images/Pokemon/' + imageName.replace(modifier, '') + '.png';
+                        return 'assets/images/Pokemon/' + imageName.replace(modifier, '') + '.png';
                     }
                 }
 
                 let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
                 if (imageName.endsWith('-f-s')) {
-                    modifier = '-f-s';
-                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0,-4) + '.png';
+                    const modifier = '-f-s';
+                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0, -4) + '.png';
                     imagePath = imageExists(imagePath, modifier);
                     imgElement.src = imagePath;
                 } else if (imageName.endsWith('-f')) {
-                    modifier = '-f';
-                    imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0,-2) + '.png';
+                    const modifier = '-f';
+                    imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0, -2) + '.png';
                     imagePath = imageExists(imagePath, modifier);
                     imgElement.src = imagePath;
                 } else if (imageName.endsWith('-s')) {
-                    modifier = '-s';
-                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0,-2) + '.png';
+                    const modifier = '-s';
+                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0, -2) + '.png';
                     imagePath = imageExists(imagePath, modifier);
                     imgElement.src = imagePath;
                 } else {
                     imgElement.src = imagePath;
                 }
-                // imageExists(imagePath, (exists) => {
-                //     if (exists) {
-                //         imgElement.src = imagePath;
-                //     } else {
-                //         regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-f', '') + '.png';
-                //         imageExists(regularImagePath, (exists) => {
-                //             if (exists) {
-                //                 imgElement.src = regularImagePath;
-                //             } else {
-                //                 regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-s', '') + '.png';
-                //                 imageExists(regularImagePath, (exists) => {
-                //                     if (exists) {
-                //                         imgElement.src = regularImagePath;
-                //                     } else {
-                //                         imgElement.alt = 'Image not Found';
-                //                     }
-                //                 });
-                //             }
-                //         });
-                //     }
-                // });
-                console.log(imageName);
-            } else {
-                imgElement.style.display = 'none';
-                document.getElementById('username' + i).style.display = 'none';
+
+                // Initialize positions at the top left corner
+                const posX = padding;
+                const posY = padding;
+
+                imgElement.style.left = `${posX}px`;
+                imgElement.style.top = `${posY}px`;
+                usernameElement.style.left = `${posX}px`;
+                usernameElement.style.top = `${posY + imgElement.height}px`;
+
+                velocities.push({
+                    x: (Math.random() * 4 - 2) * speedAdjust,
+                    y: (Math.random() * 4 - 2) * speedAdjust
+                });
+
+                index++;
+                setTimeout(addPokemon, 3000); // Add the next Pokémon after 3 seconds
             }
+
+            addPokemon();
+            updatePosition();
         }
 
-        const velocities = Array.from(images).map(() => ({
-            x: (Math.random() * 4 - 2) * speedAdjust,
-            y: (Math.random() * 4 - 2) * speedAdjust  
-        }));
+        const velocities = [];
 
         function updatePosition() {
+            const images = document.querySelectorAll('.bouncingImage');
+            const usernames = document.querySelectorAll('.username');
+
             images.forEach((img, index) => {
                 if (img.style.display === 'none') return;
 
@@ -322,12 +312,7 @@
             const data = await response.json();
             const chatters = data.data;
 
-            chatters.slice(0, 6).forEach((chatter, index) => {
-                const usernameElement = document.getElementById(`username${index + 1}`);
-                if (usernameElement) {
-                    usernameElement.textContent = chatter.user_name;
-                }
-            });
+            createPokemonAndUsernames(chatters);
         }
 
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
@@ -339,8 +324,6 @@
         } else {
             authenticate();
         }
-
-        updatePosition();
     </script>
 </body>
 </html>
