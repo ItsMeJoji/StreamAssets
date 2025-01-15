@@ -47,6 +47,7 @@
     
 
     <script src="assets/js/arrays.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tmi.js"></script>
     <script>
         const container = document.getElementById('container');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
@@ -97,6 +98,7 @@
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
         const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'localhost:3000/parasocial-checker.html';
         const username = urlParams.username || getUrlParameter('username');
         const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
@@ -133,8 +135,13 @@
                 usernameElement.id = `username${index + 1}`;
                 usernameElement.textContent = chatters[index].user_name;
 
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.id = `message${index + 1}`;
+
                 container.appendChild(imgElement);
                 container.appendChild(usernameElement);
+                container.appendChild(messageElement);
 
                 // Shiny Check
                 const MAX_RANGE = 5;
@@ -183,6 +190,8 @@
                 imgElement.style.top = `${posY}px`;
                 usernameElement.style.left = `${posX}px`;
                 usernameElement.style.top = `${posY + imgElement.height}px`;
+                messageElement.style.left = `${posX}px`;
+                messageElement.style.top = `${posY - 20}px`;
 
                 velocities.push({
                     x: (Math.random() * 4 - 2) * speedAdjust,
@@ -202,6 +211,7 @@
         function updatePosition() {
             const images = document.querySelectorAll('.bouncingImage');
             const usernames = document.querySelectorAll('.username');
+            const messages = document.querySelectorAll('.message');
 
             images.forEach((img, index) => {
                 if (img.style.display === 'none') return;
@@ -247,6 +257,8 @@
                 img.style.top = posY + 'px';
                 usernames[index].style.left = `${posX}px`;
                 usernames[index].style.top = `${posY + img.height}px`;
+                messages[index].style.left = `${posX}px`;
+                messages[index].style.top = `${posY - 20}px`;
             });
 
             requestAnimationFrame(updatePosition);
@@ -319,7 +331,33 @@
         if (accessToken) {
             storeAccessToken(accessToken);
             Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
-                .then(([channelId, moderatorId]) => fetchChatUsers(channelId, moderatorId, accessToken))
+                .then(([channelId, moderatorId]) => {
+                    fetchChatUsers(channelId, moderatorId, accessToken);
+
+                    // Connect to Twitch chat
+                    const client = new tmi.Client({
+                        options: { debug: true },
+                        identity: {
+                            username: username,
+                            password: `oauth:${accessToken}`
+                        },
+                        channels: [username]
+                    });
+
+                    client.connect();
+
+                    client.on('message', (channel, tags, message, self) => {
+                        // Display the message above the corresponding Pokémon
+                        const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
+                        if (usernameIndex !== -1) {
+                            const messageElement = document.getElementById(`message${usernameIndex + 1}`);
+                            messageElement.textContent = message;
+                            setTimeout(() => {
+                                messageElement.textContent = '';
+                            }, 5000); // Clear the message after 5 seconds
+                        }
+                    });
+                })
                 .catch(error => console.error(error));
         } else {
             authenticate();
