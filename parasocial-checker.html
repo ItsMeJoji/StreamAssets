@@ -46,8 +46,8 @@
     </div>
     
 
-    <script src="assets/js/arrays.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
+    <script src="assets/js/arrays.js"></script>
     <script>
         const container = document.getElementById('container');
         const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
@@ -327,36 +327,37 @@
             createPokemonAndUsernames(chatters);
         }
 
+            // Connect to Twitch chat
+            const client = new tmi.Client({
+                options: { debug: true },
+                identity: {
+                    username: username,
+                    password: `oauth:${accessToken}`
+                },
+                channels: [username]
+            });
+
+            client.connect();
+
+            client.on('message', (channel, tags, message, self) => {
+                // Display the message above the corresponding Pokémon
+                const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
+                if (usernameIndex !== -1) {
+                    const messageElement = document.getElementById(`message${usernameIndex + 1}`);
+                    messageElement.textContent = message;
+                    setTimeout(() => {
+                        messageElement.textContent = '';
+                    }, 5000); // Clear the message after 5 seconds
+                }
+            });
+        }
+
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
             Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
                 .then(([channelId, moderatorId]) => {
                     fetchChatUsers(channelId, moderatorId, accessToken);
-
-                    // Connect to Twitch chat
-                    const client = new tmi.Client({
-                        options: { debug: true },
-                        identity: {
-                            username: username,
-                            password: `oauth:${accessToken}`
-                        },
-                        channels: [username]
-                    });
-
-                    client.connect();
-
-                    client.on('message', (channel, tags, message, self) => {
-                        // Display the message above the corresponding Pokémon
-                        const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
-                        if (usernameIndex !== -1) {
-                            const messageElement = document.getElementById(`message${usernameIndex + 1}`);
-                            messageElement.textContent = message;
-                            setTimeout(() => {
-                                messageElement.textContent = '';
-                            }, 5000); // Clear the message after 5 seconds
-                        }
-                    });
                 })
                 .catch(error => console.error(error));
         } else {
