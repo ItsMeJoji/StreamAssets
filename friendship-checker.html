@@ -81,17 +81,17 @@
             if (imageName) {
                 let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
                 if (imageName.endsWith('-f-s')) {
-                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.replace('-f-s','') + '.png';
+                    imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0,-4) + '.png';
                 } else if (imageName.endsWith('-f')) {
-                    imagePath = 'assets/images/Pokemon/female/' + imageName.replace('-f','') + '.png';
+                    imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0,-2) + '.png';
                 } else if (imageName.endsWith('-s')) {
-                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.replace('-s','') + '.png';
+                    imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0,-2) + '.png';
                 }
                 imageExists(imagePath, (exists) => {
                     if (exists) {
                         imgElement.src = imagePath;
                     } else {
-                        const regularImagePath = 'assets/images/Pokemon/' + imageName.replace('-f', '') + '.png';
+                        const regularImagePath = 'assets/images/Pokemon/' + imageName.slice(0,-2) + '.png';
                         imageExists(regularImagePath, (exists) => {
                             if (exists) {
                                 imgElement.src = regularImagePath;
