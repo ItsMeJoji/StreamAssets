@@ -6,8 +6,8 @@
     <title>Friendship Checker Poketch App</title>
     <style>
     #container {
-        width: 1012px;
-        height: 759px;
+        width: 1920px;
+        height: 1080px;
         position: relative;
         border: 1px solid black;
         overflow: hidden;
@@ -64,7 +64,7 @@
 
 
         const container = document.getElementById('container');
-        const speedAdjust = 1; // Adjust the speed of the bouncing images as needed
+        const speedAdjust = 0.1; // Adjust the speed of the bouncing images as needed
         const padding = 50; // Padding from the edges and between elements
 
         // Function to get URL parameters
@@ -111,8 +111,8 @@
 
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
-        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
         const username = urlParams.username || getUrlParameter('username');
         const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
@@ -223,9 +223,18 @@
         function addNewPokemonAndUsernames(chatter, previousIndex) {
             let index = previousIndex;
 
+            const specialUsers = {
+                'itsmejoji': 'blastoise-s',
+                'nightbot': 'porygon-z',
+            }
+
             function addPokemon() {
 
                 let imageName = getRandomPokemon();
+                if (specialUsers[chatter.user_name]) {
+                    imageName = specialUsers[chatter.user_name];  // Override with special Pokémon for specific users
+                }
+
                 const imgElement = document.createElement('img');
                 imgElement.className = 'bouncingImage';
                 imgElement.id = `pokemon${index + 1}`;
@@ -425,12 +434,21 @@
             const data = await response.json();
             const chatters = data.data;
 
-            //createPokemonAndUsernames(chatters);
+                // Check for duplicates before creating Pokémon
+            chatters.forEach(chatter => {
+                if (!existingUsernames.includes(chatter.user_name)) {
+                    existingUsernames.push(chatter.user_name);
+                    //createPokemonAndUsernames([chatter]);
+                }
+            });
+
         
 
 
         }
 
+
+        const existingUsernames = []; // Keeps track of usernames already processed
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
@@ -458,6 +476,12 @@
                             chatters.push({ user_name: tags.username });
                         }
 
+                        const username = tags.username;
+                        if (!existingUsernames.includes(username)) {
+                                existingUsernames.push(username);
+                                addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                            }
+
                         // Display the message above the corresponding Pokémon
                         const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
                         if (usernameIndex !== -1) {
@@ -474,7 +498,10 @@
                     client.on('join', (channel, username, self) => {
                         if (!chatters.some(chatter => chatter.user_name === username)) {
                             chatters.push({ user_name: username });
-                            addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                            // if (!existingUsernames.includes(username)) {
+                            //     existingUsernames.push(username);
+                            //     addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                            // }
                         }
                     });
 
