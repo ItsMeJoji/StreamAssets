@@ -111,8 +111,8 @@
 
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
-        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
         const username = urlParams.username || getUrlParameter('username');
         const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
 
@@ -226,9 +226,9 @@
             const specialUsers = {
                 'itsmejoji': 'blastoise-s',
                 'nightbot': 'porygon-z',
-                'thomkeeris': 'sableye',
+                'thomkeeris': 'sableye'
             }
-
+            console.log('Adding new Pokémon for ' + chatter.user_name);
             function addPokemon() {
 
                 let imageName = getRandomPokemon();
@@ -314,6 +314,8 @@
 
             addPokemon();
             updatePosition();
+
+            console.log('New Pokémon added for ' + chatter.user_name);
         }
 
 
@@ -433,15 +435,15 @@
             }
 
             const data = await response.json();
-            const chatters = data.data;
+            // const chatters = data.data;
 
-                // Check for duplicates before creating Pokémon
-            chatters.forEach(chatter => {
-                if (!existingUsernames.includes(chatter.user_name)) {
-                    existingUsernames.push(chatter.user_name);
-                    //createPokemonAndUsernames([chatter]);
-                }
-            });
+            //     // Check for duplicates before creating Pokémon
+            // chatters.forEach(chatter => {
+            //     if (!existingUsernames.includes(chatter.user_name)) {
+            //         existingUsernames.push(chatter.user_name);
+            //         //createPokemonAndUsernames([chatter]);
+            //     }
+            // });
 
         
 
@@ -481,6 +483,7 @@
                         if (!existingUsernames.includes(username)) {
                                 existingUsernames.push(username);
                                 addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                                console.log('New User Added:' + username);
                             }
 
                         // // Display the message above the corresponding Pokémon
@@ -496,23 +499,23 @@
                     });
 
                     // Listen to users joining the channel
-                    client.on('join', (channel, username, self) => {
-                        if (!chatters.some(chatter => chatter.user_name === username)) {
-                            chatters.push({ user_name: username });
-                            // if (!existingUsernames.includes(username)) {
-                            //     existingUsernames.push(username);
-                            //     addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
-                            // }
-                        }
-                    });
+                    // client.on('join', (channel, username, self) => {
+                    //     if (!chatters.some(chatter => chatter.user_name === username)) {
+                    //         //chatters.push({ user_name: username });
+                    //         // if (!existingUsernames.includes(username)) {
+                    //         //     existingUsernames.push(username);
+                    //         //     addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                    //         // }
+                    //     }
+                    // });
 
                     // Listen to users leaving the channel
-                    client.on('part', (channel, username, self) => {
-                        const index = chatters.findIndex(chatter => chatter.user_name === username);
-                        if (index !== -1) {
-                            chatters.splice(index, 1); // Remove the user from chatters array
-                        }
-                    });
+                    // client.on('part', (channel, username, self) => {
+                    //     const index = chatters.findIndex(chatter => chatter.user_name === username);
+                    //     if (index !== -1) {
+                    //         chatters.splice(index, 1); // Remove the user from chatters array
+                    //     }
+                    // });
 
                     // Listen to deleted messages
                     client.on('messagedeleted', (channel, username, deletedMessage, userstate) => {
