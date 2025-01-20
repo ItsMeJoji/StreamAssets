@@ -322,7 +322,7 @@
         function updatePosition() {
             const images = document.querySelectorAll('.bouncingImage');
             const usernames = document.querySelectorAll('.username');
-            const messages = document.querySelectorAll('.message');
+            //const messages = document.querySelectorAll('.message');
 
             images.forEach((img, index) => {
                 if (img.style.display === 'none') return;
@@ -368,8 +368,8 @@
                 img.style.top = posY + 'px';
                 usernames[index].style.left = `${posX}px`;
                 usernames[index].style.top = `${posY + img.height}px`;
-                messages[index].style.left = `${posX}px`;
-                messages[index].style.top = `${posY + 50}px`;
+                // messages[index].style.left = `${posX}px`;
+                // messages[index].style.top = `${posY + 50}px`;
             });
 
             requestAnimationFrame(updatePosition);
