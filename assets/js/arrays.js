@@ -1333,7 +1333,12 @@ const availablePokemon = [
     "zygarde"
 ];
 
+
+const availablePokemonObj = availablePokemon.slice(0, 2000).map(pokemon => ({ name: pokemon }));
+
+
 // Export the array if using a module system
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = availablePokemon;
+    module.exports = availablePokemonObj;
 }
