@@ -9,8 +9,10 @@
         width: 1920px;
         height: 1080px;
         position: relative;
-        /* border: 1px solid black; */
+        border: 1px solid black;
+        border-radius: 20px;
         overflow: hidden;
+        
     }
     .bouncingImage {
         position: absolute;
@@ -149,16 +151,16 @@
                 usernameElement.id = `username${index + 1}`;
                 usernameElement.textContent = chatters[index].user_name;
 
-                // const messageElement = document.createElement('div');
-                // messageElement.className = 'message';
-                // messageElement.id = `message${index + 1}`;
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.id = `message${index + 1}`;
 
                 container.appendChild(imgElement);
                 container.appendChild(usernameElement);
-                //container.appendChild(messageElement);
+                container.appendChild(messageElement);
 
                 // Shiny Check
-                const MAX_RANGE = 5;
+                const MAX_RANGE = 10;
                 function getRandomNumber(max) {
                     return Math.floor(Math.random() * max) + 1;
                 }
@@ -204,8 +206,8 @@
                 imgElement.style.top = `${posY}px`;
                 usernameElement.style.left = `${posX}px`;
                 usernameElement.style.top = `${posY + imgElement.height}px`;
-                // messageElement.style.left = `${posX}px`;
-                // messageElement.style.top = `${posY + imgElement.height}px`;
+                messageElement.style.left = `${posX}px`;
+                messageElement.style.top = `${posY + imgElement.height}px`;
 
                 velocities.push({
                     x: (Math.random() * 4 - 2) * speedAdjust,
@@ -233,7 +235,7 @@
 
                 let imageName = getRandomPokemon();
                 if (specialUsers[chatter.user_name]) {
-                    imageName = specialUsers[chatter.user_name];  // Override with special Pokémon for specific users
+                    imageName = specialUsers[chatter.user_name]; // Use special Pokémon for certain users
                 }
 
                 const imgElement = document.createElement('img');
@@ -246,13 +248,13 @@
                 usernameElement.id = `username${index + 1}`;
                 usernameElement.textContent = chatter.user_name;
 
-                // const messageElement = document.createElement('div');
-                // messageElement.className = 'message';
-                // messageElement.id = `message${index + 1}`;
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.id = `message${index + 1}`;
 
                 container.appendChild(imgElement);
                 container.appendChild(usernameElement);
-                //container.appendChild(messageElement);
+                container.appendChild(messageElement);
 
                 // Shiny Check
                 const MAX_RANGE = 5;
@@ -301,15 +303,13 @@
                 imgElement.style.top = `${posY}px`;
                 usernameElement.style.left = `${posX}px`;
                 usernameElement.style.top = `${posY + imgElement.height}px`;
-                // messageElement.style.left = `${posX}px`;
-                // messageElement.style.top = `${posY + imgElement.height}px`;
+                messageElement.style.left = `${posX}px`;
+                messageElement.style.top = `${posY + imgElement.height}px`;
 
                 velocities.push({
                     x: (Math.random() * 4 - 2) * speedAdjust,
                     y: (Math.random() * 4 - 2) * speedAdjust
                 });
-
-                //setTimeout(addPokemon, 3000); // Add the next Pokémon after 3 seconds
             }
 
             addPokemon();
@@ -324,7 +324,7 @@
         function updatePosition() {
             const images = document.querySelectorAll('.bouncingImage');
             const usernames = document.querySelectorAll('.username');
-            //const messages = document.querySelectorAll('.message');
+            const messages = document.querySelectorAll('.message');
 
             images.forEach((img, index) => {
                 if (img.style.display === 'none') return;
@@ -370,8 +370,8 @@
                 img.style.top = posY + 'px';
                 usernames[index].style.left = `${posX}px`;
                 usernames[index].style.top = `${posY + img.height}px`;
-                // messages[index].style.left = `${posX}px`;
-                // messages[index].style.top = `${posY + 50}px`;
+                messages[index].style.left = `${posX}px`;
+                messages[index].style.top = `${posY + 50}px`;
             });
 
             requestAnimationFrame(updatePosition);
@@ -379,7 +379,7 @@
 
         function authenticate() {
             storeUrlParameters();
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+moderator:read:chatters`;
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+moderator:read:chatters+channel:read:redemptions`;
             window.location.href = authUrl;
         }
 
@@ -435,31 +435,77 @@
             }
 
             const data = await response.json();
-            // const chatters = data.data;
-
-            //     // Check for duplicates before creating Pokémon
-            // chatters.forEach(chatter => {
-            //     if (!existingUsernames.includes(chatter.user_name)) {
-            //         existingUsernames.push(chatter.user_name);
-            //         //createPokemonAndUsernames([chatter]);
-            //     }
-            // });
-
-        
-
 
         }
 
+        function connectToPubSub(accessToken, broadcasterId) {
+            const socket = new WebSocket('wss://pubsub-edge.twitch.tv');
 
-        const existingUsernames = []; // Keeps track of usernames already processed
+            socket.onopen = () => {
+                console.log('Connected to PubSub');
+                const message = {
+                    type: 'LISTEN',
+                    nonce: Math.random().toString(36).substring(7),
+                    data: {
+                        topics: [`channel-points-channel-v1.${broadcasterId}`],
+                        auth_token: accessToken,
+                    },
+                };
+                socket.send(JSON.stringify(message));
+            };
+
+            socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log('PubSub message:', message);
+                // Check for redemption events
+                if (message.type === 'MESSAGE') {
+                    const redemptionData = JSON.parse(message.data.message);
+                    handleChannelPointRedemption(redemptionData);
+                }
+            };
+
+            socket.onerror = (error) => {
+                console.error('PubSub error:', error);
+            };
+
+            socket.onclose = () => {
+                console.warn('PubSub connection closed. Reconnecting in 10 seconds...');
+                setTimeout(() => connectToPubSub(accessToken, broadcasterId), 10000);
+            };
+        }
+
+
+        function handleChannelPointRedemption(data) {
+            console.log("Redemption data:", data.data);
+            const redemption = data.data.redemption;
+
+            if (redemption.reward.title === 'Reroll Pokemon') {
+                const username = redemption.user.login;
+
+                const index = existingUsernames.findIndex((name) => name === username);
+
+                if (index !== -1) {
+                    const newPokemon = getRandomPokemon();
+                    const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+                    pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+
+                    console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+                } else {
+                    console.warn(`User ${username} is not currently in the chat.`);
+                }
+            }
+        }
+
+        const existingUsernames = [];
         const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
         if (accessToken) {
             storeAccessToken(accessToken);
             Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
                 .then(([channelId, moderatorId]) => {
+                    connectToPubSub(accessToken, channelId);
                     fetchChatUsers(channelId, moderatorId, accessToken);
 
-                    const chatters = []; // Initialize chatters as an empty array
+                    const chatters = [];
 
                     const client = new tmi.Client({
                         options: { debug: true },
@@ -474,6 +520,16 @@
 
                     // Listen to messages
                     client.on('message', (channel, tags, message, self) => {
+
+                        // if (self) return; // Ignore messages from the bot
+
+
+                        const badges = tags.badges || {};
+                        const isBroadcaster = badges.broadcaster === '1';
+                        const isModerator = tags.moderator === '1';
+                        const isSubscriber = tags.subscriber === '1';
+                        const isVip = badges.vip === '1';
+
                         // Ensure the user is in the chatters array
                         if (!chatters.some(chatter => chatter.user_name === tags.username)) {
                             chatters.push({ user_name: tags.username });
@@ -486,16 +542,24 @@
                                 console.log('New User Added:' + username);
                             }
 
-                        // // Display the message above the corresponding Pokémon
-                        // const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
-                        // if (usernameIndex !== -1) {
-                        //     const messageElement = document.getElementById(`message${usernameIndex + 1}`);
-                        //     messageElement.textContent = message;
+                        if (isBroadcaster || isModerator || isSubscriber || isVip) {
 
-                        //     setTimeout(() => {
-                        //         messageElement.textContent = '';
-                        //     }, 5000); // Clear the message after 5 seconds
-                        // }
+                            console.log('User is a mod, sub, or VIP');
+
+                            //TODO: Add logic to handle mod, sub, and VIP messages
+                            
+                            // Display the message above the corresponding Pokémon
+                            const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
+                            if (usernameIndex !== -1) {
+                                const messageElement = document.getElementById(`message${usernameIndex + 1}`);
+                                messageElement.textContent = message;
+    
+                                setTimeout(() => {
+                                    messageElement.textContent = '';
+                                }, 5000); // Clear the message after 5 seconds
+                            }
+                        }
+
                     });
 
                     // Listen to users joining the channel
@@ -526,11 +590,11 @@
                             // Remove Pokémon, username, and message elements from the DOM
                             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
                             const usernameElement = document.getElementById(`username${index + 1}`);
-                            //const messageElement = document.getElementById(`message${index + 1}`);
+                            const messageElement = document.getElementById(`message${index + 1}`);
 
                             if (pokemonElement) pokemonElement.remove();
                             if (usernameElement) usernameElement.remove();
-                            //if (messageElement) messageElement.remove();
+                            if (messageElement) messageElement.remove();
 
                             // Remove user from chatters and existingUsernames arrays
                             chatters.splice(index, 1);
