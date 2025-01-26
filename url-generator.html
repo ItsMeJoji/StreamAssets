@@ -167,6 +167,10 @@
                             params.append(`pokemon${i}`, pokemon);
                         }
                     }
+
+                    if (document.getElementById('friendship').checked) {
+                        params.append('friendship', 'true');
+                    }
         
                     const fullUrl = `${baseUrl}?${params.toString()}`;
                     document.getElementById('generatedFriendshipURL').textContent = fullUrl;

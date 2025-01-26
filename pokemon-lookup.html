@@ -98,6 +98,118 @@
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
-    <script src="assets/js/pl.js"></scriptsrc></script>
+    <script src="assets/js/pl.js"></script>
+    <script src="assets/js/BitConverter.js"></script>
+
+    <script>
+
+        async function loadDAT(filePath){
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const buffer = await response.arrayBuffer();
+            const dat = new Uint8Array(buffer);
+            const interval = 424;
+            console.log('Map Count:', dat.length/interval);
+            console.log('DAT:', dat);
+
+            const percentGrass = [20, 20, 10, 10, 10, 10, 5, 5, 4, 4, 1, 1]
+            const slotsRadar = [4, 5, 10, 11]
+            const slotsRuby = [8,9]
+            const names = await loadPokemonNames('./assets/dat/pokemon.txt');
+            const areas = await loadAreaNames('./assets/dat/Maps_DP.txt');
+
+            let mapInt
+            let grass
+            let pokeRadar
+            let ruby
+
+            for (i = 0; i < dat.length; i += interval) {
+                const startsWithZero = dat[i] !== 0;
+                mapInt = i/interval;
+                console.log(`Interval starting at ${i}: ${startsWithZero ? 'Does not start with 0' : 'Start with 0'}`);
+
+                if (startsWithZero) {
+                    const location = areas[mapsTableDP.indexOf(mapInt)];
+                    console.log(`Location: ${location}`);
+
+                    grass = dat.slice(i+4, i+100);
+                    console.log('Grass Slot Data:', grass);
+                    console.log('Number of Grass Encounters: ', grass.length/8);
+                    for (j = 0; j < grass.length; j += 8) {
+                        const encounter = grass.slice(j, j+8);
+                        const speciesID = BitConverter.toInt16(encounter.slice(4, 6));
+                        const name = names[speciesID-1];
+                        const maxLv = encounter[0];
+                        let minLv = encounter[1];
+                        if (minLv === 0) minLv = maxLv;
+                        const percent = percentGrass[j/8];
+                        console.log(`Pokemon: ${name}, Pokedex #: ${speciesID}, Min Level: ${minLv}, Max Level: ${maxLv}, Encounter Rate: ${percent}%`);;
+                    }
+                    pokeRadar = dat.slice(i+124, i+140);
+                    console.log('Poke Radar Slot Data:', pokeRadar);
+                    console.log('Encounter Changes when using Poke Radar: ', pokeRadar.length/4);
+                    for (r = 0; r < pokeRadar.length; r += 4) {
+                        const encounter = pokeRadar.slice(r, r+4);
+                        const speciesID = BitConverter.toInt16(encounter.slice(0, r+4));
+                        const name = names[speciesID-1];
+                        console.log(`Pokemon: ${name}, Pokedex #: ${speciesID}`);;
+                    }
+                    ruby = dat.slice(i+164, i+172);
+                    console.log('Ruby Slot Data:', ruby);
+                    console.log('Encounter Changes when Ruby inserted: ', ruby.length/4);
+                    for (r = 0; r < ruby.length; r += 4) {
+                        const encounter = ruby.slice(r, r+4);
+                        const speciesID = BitConverter.toInt16(encounter.slice(0, r+4));
+                        //console.log(`Species ID: ${speciesID}`);
+                        const name = names[speciesID-1];
+                        console.log(`Pokemon: ${name}, Pokedex #: ${speciesID}`);;
+                    }
+                }
+            }
+            return dat;
+        }
+
+
+
+        mapsTableDP = [178, 176, 177, 53, 179, 180, 181, 182, 54, 55, 8, 9, 23, 24, 25, 26, 27, 28, 63, 69,
+                    75, 112, 113, 114, 115, 118, 119, 121, 120, 122, 123, 124, 117, 0, 136, 137, 134, 7,
+                    4, 5, 6, 56, 57, 58, 22, 19, 11, 12, 15, 16, 17, 18, 13, 10, 21, 20, 3, 138, 139, 140,
+                    141, 142, 144, 143, 146, 145, 147, 148, 149, 150, 157, 156, 159, 158, 160, 161, 162, 163,
+                    164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 47, 51, 48, 49, 50, 52, 29, 59,
+                    106, 107, 108, 109, 110, 111, 151, 152, 153, 154, 155, 116, 2, 1, 125, 132];
+
+        async function loadPokemonNames(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const buffer = await response.arrayBuffer();
+            return new TextDecoder().decode(buffer).split('\r\n');
+        }
+
+        async function loadAreaNames(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const buffer = await response.arrayBuffer();
+            return new TextDecoder().decode(buffer).split('\r\n');
+        }
+
+        // loadPokemonNames('./assets/dat/pokemon.txt').then(pokemonNames => {
+        //     console.log('Pokemon names loaded:', pokemonNames);
+        // }).catch(error => {
+        //     console.error('Error loading Pokemon names:', error);
+        // });
+
+        loadDAT('./assets/dat/DiamondSlots.dat').then(dat => {
+            console.log('DAT loaded:', dat);
+        }).catch(error => {
+            console.error('Error loading DAT:', error);
+        });
+
+    </script>
 </body>
 </html>
