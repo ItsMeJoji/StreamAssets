@@ -113,10 +113,12 @@
 
         const urlParams = retrieveUrlParameters();
         const clientId = urlParams.client_id || getUrlParameter('client_id');
-        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+        //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+        const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
         const username = urlParams.username || getUrlParameter('username');
-        const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username');
+        const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
+        const youtubeAPI = urlParams.youtube_api || getUrlParameter('youtube_api');
+        const youtubeStreamId = urlParams.youtube_stream_id || getUrlParameter('youtube_stream_id');
 
         // Function to check if an image exists
         function imageExists(url, callback) {
@@ -526,7 +528,7 @@
 
                         const badges = tags.badges || {};
                         const isBroadcaster = badges.broadcaster === '1';
-                        const isModerator = tags.moderator === '1';
+                        const isModerator = badges.moderator === '1';
                         const isSubscriber = tags.subscriber === '1';
                         const isVip = badges.vip === '1';
 
@@ -541,7 +543,8 @@
                                 addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
                                 console.log('New User Added:' + username);
                             }
-
+                            
+                        console.log('Badges:', badges);
                         if (isBroadcaster || isModerator || isSubscriber || isVip) {
 
                             console.log('User is a mod, sub, or VIP');
@@ -607,6 +610,9 @@
         } else {
             authenticate();
         }
+
+
+
     </script>
 </body>
 </html>
