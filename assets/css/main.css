@@ -1,10 +1,27 @@
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic,800,800italic");
 
-/*
-	Spectral by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
-*/
+.collapsible {
+	background-color: #eee !important;
+	color: #444 !important;
+	cursor: pointer !important;
+	width: 100% !important;
+	border: none !important;
+	text-align: center !important;
+	outline: none !important;
+
+  }
+  
+.collapsible.active, .collapsible:hover {
+	background-color: #ccc !important;
+  }
+  
+.content {
+  padding: 0 18px !important;
+  background-color: white !important;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out;
+}
 
 html, body, div, span, applet, object,
 iframe, h1, h2, h3, h4, h5, h6, p, blockquote,
@@ -418,6 +435,10 @@ input, select, textarea {
 
 		.row > .col-12 {
 			width: 100%;
+		}
+		.row > .col-lg-12 {
+			width: 100%;
+			display: flex;
 		}
 
 		.row > .off-12 {
