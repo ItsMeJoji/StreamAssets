@@ -24,6 +24,62 @@ function getUrlParameter(name) {
     img.src = url;
 }
 
+
+//Cropping Transparent Spacing
+function cropTransparent(imgElement) {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // Needed if image is from another domain
+    img.src = imgElement.src;
+
+    img.onload = function () {
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas size to image size
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const pixels = imageData.data;
+
+        let top = img.height, bottom = 0, left = img.width, right = 0;
+
+        // Find bounding box of non-transparent pixels
+        for (let y = 0; y < img.height; y++) {
+            for (let x = 0; x < img.width; x++) {
+                const index = (y * img.width + x) * 4;
+                const alpha = pixels[index + 3]; // Alpha channel
+
+                if (alpha > 0) { // If not fully transparent
+                    if (x < left) left = x;
+                    if (x > right) right = x;
+                    if (y < top) top = y;
+                    if (y > bottom) bottom = y;
+                }
+            }
+        }
+
+        // New cropped dimensions
+        const newWidth = right - left + 1;
+        const newHeight = bottom - top + 1;
+
+        if (newWidth > 0 && newHeight > 0) {
+            // Create a new canvas for cropped image
+            const croppedCanvas = document.createElement("canvas");
+            croppedCanvas.width = newWidth;
+            croppedCanvas.height = newHeight;
+            const croppedCtx = croppedCanvas.getContext("2d");
+
+            croppedCtx.drawImage(canvas, left, top, newWidth, newHeight, 0, 0, newWidth, newHeight);
+
+            // Replace original image with cropped one
+            imgElement.src = croppedCanvas.toDataURL();
+        }
+    };
+}
+
 // Set image sources based on URL parameters
 for (let i = 1; i <= 6; i++) {
     const imageName = getUrlParameter('pokemon' + i).toLowerCase();
@@ -40,11 +96,13 @@ for (let i = 1; i <= 6; i++) {
         imageExists(imagePath, (exists) => {
             if (exists) {
                 imgElement.src = imagePath;
+                cropTransparent(imgElement);
             } else {
                 const regularImagePath = 'assets/images/Pokemon/' + imageName.slice(0,-2) + '.png';
                 imageExists(regularImagePath, (exists) => {
                     if (exists) {
                         imgElement.src = regularImagePath;
+                        cropTransparent(imgElement);
                     } else {
                         imgElement.alt = 'Image not Found';
                     }
@@ -71,10 +129,10 @@ function updatePosition() {
         posX += velocities[index].x;
         posY += velocities[index].y;
 
-        if (posX + img.width >= container.clientWidth || posX <= 0) {
+        if (posX + img.width >= container.clientWidth -20 || posX <= 0+20) {
             velocities[index].x = -velocities[index].x;
         }
-        if (posY + img.height >= container.clientHeight || posY <= 0) {
+        if (posY + img.height >= container.clientHeight -20 || posY <= 0+20) {
             velocities[index].y = -velocities[index].y;
         }
 
@@ -83,8 +141,8 @@ function updatePosition() {
                 const otherPosX = parseFloat(otherImg.style.left) || 0;
                 const otherPosY = parseFloat(otherImg.style.top) || 0;
 
-                // Define smaller collision area (20x20px) centered within each image
-                const collisionSize = 25;
+                // Define collision area
+                const collisionSize = 90;
                 const halfCollisionSize = collisionSize / 2;
 
                 const imgCenterX = posX + img.width / 2;
@@ -129,7 +187,7 @@ function showHeartsForImage(img, index) {
         heart.src = 'assets/images/misc/heart.png';
         heart.className = 'heart';
         heart.style.left = `${imgCenterX - (heartCount * 15) + i * 30}px`;
-        heart.style.top = `${imgTopY + 50}px`;
+        heart.style.top = `${imgTopY - 50}px`;
         heart.style.display = 'block';
         container.appendChild(heart);
         hearts.push(heart);
@@ -164,6 +222,20 @@ if (showHearts === 'true') {
 }
 
 const showOverlay = getUrlParameter('overlay');
-if (showOverlay === 'false') {
-    overlay.style.display = 'none';
+if (showOverlay === 'true') {
+    overlay.style.display = 'block';
+    overlay.style.backgroundColor = 'background-color: rgba(0, 121, 30, 0.329);'
+    container.style.backgroundColor = 'rgba(151, 250, 151, 0.596)';
+    images.forEach(img => {
+        img.style.filter = 'grayscale(90%)';
+    });
+}
+
+const setDSSize =  getUrlParameter('ds')
+if (setDSSize == 'true'){
+    container.style.height = '859px';
+    container.style.width = '1145px';
+    images[1].style.left = '850px';
+    images[3].style.left = '850px';
+    images[5].style.left = '850px';
 }
