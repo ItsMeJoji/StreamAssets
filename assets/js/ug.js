@@ -23,6 +23,10 @@ function generateFriendshipURL() {
         params.append('ds', 'true');
     }
 
+    if (document.getElementById('scale').value) {
+        params.append('scale', document.getElementById('scale').value);
+    }
+
     const fullUrl = `${baseUrl}?${params.toString()}`;
     document.getElementById('generatedFriendshipURL').textContent = fullUrl;
 }

@@ -160,10 +160,11 @@ function updatePosition() {
             }
         });
 
+        const {scaleX, scaleY} = getScale(img);
         if (velocities[index].x > 0) {
-            img.style.transform = 'scaleX(-1)'; // Moving to the right
+            img.style.transform = `scale(${-Math.abs(scaleX)}, ${scaleY})`;
         } else {
-            img.style.transform = 'scaleX(1)'; // Moving to the left
+            img.style.transform = `scale(${Math.abs(scaleX)}, ${scaleY})`;
         }
 
         img.style.left = posX + 'px';
@@ -171,6 +172,17 @@ function updatePosition() {
     });
 
     requestAnimationFrame(updatePosition);
+}
+
+function getScale(img){
+    const transform = window.getComputedStyle(img).transform;
+
+    if (transform === 'none') {
+        return {scaleX: 1, scaleY: 1}; // Default scale if no transform is applied
+    }
+
+    const matrix = new DOMMatrix(transform);
+    return {scaleX: matrix.a, scaleY: matrix.d};
 }
 
 function showHeartsForImage(img, index) {
@@ -238,4 +250,11 @@ if (setDSSize == 'true'){
     images[1].style.left = '850px';
     images[3].style.left = '850px';
     images[5].style.left = '850px';
+}
+
+const scale = getUrlParameter('scale')
+if (scale){
+    images.forEach(img => {
+        img.style.transform = `scale(${scale})`;
+    });
 }
