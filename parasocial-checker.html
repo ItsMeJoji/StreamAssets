@@ -18,7 +18,8 @@
         position: absolute;
         width: 150px;
         height: auto;
-        filter: grayscale(50%);
+        /* scale: 5;
+        filter: grayscale(50%); */
         z-index: 1;
     }
     .emote {
@@ -62,6 +63,7 @@
 </head>
 <body>
     <div id="container">
+        <canvas id="canvas" style="display: none;"></canvas>
         <!-- <div class="overlay"></div> -->
     </div>
     
@@ -69,6 +71,6 @@
     <script src="assets/js/tmi.min.js"></script>
     <script src="assets/js/arrays.js"></script>
     <script src="assets/js/psc.js"></script>
-    
+
 </body>
 </html>
