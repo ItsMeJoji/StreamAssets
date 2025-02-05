@@ -525,6 +525,7 @@ function handleChannelPointRedemption(data) {
             const newPokemon = getRandomPokemon();
             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
             pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+            cropTransparent(pokemonElement);
 
             console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
         } else {
