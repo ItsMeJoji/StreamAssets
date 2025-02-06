@@ -1,7 +1,7 @@
 
 
 const container = document.getElementById('container');
-const speedAdjust = 0.8; // Adjust the speed of the bouncing images as needed
+const speedAdjust = 0.5; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
 
 // Function to get URL parameters
@@ -48,8 +48,8 @@ function retrieveAccessToken() {
 
 const urlParams = retrieveUrlParameters();
 const clientId = urlParams.client_id || getUrlParameter('client_id');
-const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
 const username = urlParams.username || getUrlParameter('username');
 const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
 const youtubeAPI = urlParams.youtube_api || getUrlParameter('youtube_api');
@@ -338,10 +338,10 @@ function updatePosition() {
 
         img.style.left = posX + 'px';
         img.style.top = posY + 'px';
-        usernames[index].style.left = `${posX}px`;
+        usernames[index].style.left = `${posX - 20}px`;
         usernames[index].style.top = `${posY + img.height}px`;
-        messages[index].style.left = `${posX}px`;
-        messages[index].style.top = `${posY + 50}px`;
+        messages[index].style.left = `${posX - 20}px`;
+        messages[index].style.top = `${posY + 5}px`;
         // emotes[index].style.left = `${posX}px`;
         // emotes[index].style.top = `${posY + 50}px`;
     });
@@ -632,20 +632,20 @@ if (accessToken) {
                         const messageElement = document.getElementById(`message${usernameIndex + 1}`);
                         const emoteElement = document.getElementById(`emote${usernameIndex + 1}`);
                         
-                        parts.forEach((part, index) =>{
-                                if (part.type === "text"){
-                                    messageElement.textContent = part.content;
-                                    emoteElement.style.display = 'inline-block';
-                                } else if (part.type === "emote"){
-                                    emoteElement.src = part.content;
-                                    emoteElement.style.display = 'inline-block';
-                                }
-                        });
+                        // parts.forEach((part, index) =>{
+                        //         if (part.type === "text"){
+                        //             messageElement.textContent = part.content;
+                        //             emoteElement.style.display = 'inline-block';
+                        //         } else if (part.type === "emote"){
+                        //             emoteElement.src = part.content;
+                        //             emoteElement.style.display = 'inline-block';
+                        //         }
+                        // });
 
-                        // messageElement.textContent = message;
+                        messageElement.textContent = message;
 
                         setTimeout(() => {
-                            messageElement.innerHTML = messageElement.innerHTML.replace(/[^<]*$/, '');;
+                            messageElement.textContent = '';
                             emoteElement.style.display = 'none';
                         }, 5000); // Clear the message after 5 seconds
                     }
