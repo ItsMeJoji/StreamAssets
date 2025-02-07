@@ -188,7 +188,8 @@ function getScale(img){
 function showHeartsForImage(img, index) {
     if (img.style.display === 'none') return;
 
-    const heartCount = Math.floor(Math.random() * 5) + 1;
+    // const heartCount = Math.floor(Math.random() * 5) + 1;
+    const heartCount = 2
     const hearts = [];
 
     const imgCenterX = parseFloat(img.style.left) + img.width / 2;
@@ -198,9 +199,12 @@ function showHeartsForImage(img, index) {
         const heart = document.createElement('img');
         heart.src = 'assets/images/misc/heart.png';
         heart.className = 'heart';
-        heart.style.left = `${imgCenterX - (heartCount * 15) + i * 30}px`;
+        spacing = 115;
+        // heart.style.left = `${imgCenterX - (heartCount * 15) + i * 30}px`;
+        heart.style.left = `${imgCenterX - ((heartCount - 1) * spacing) / 2 + i * spacing}px`;
         heart.style.top = `${imgTopY - 50}px`;
         heart.style.display = 'block';
+        heart.style.transform = 'scale(0.75)';
         container.appendChild(heart);
         hearts.push(heart);
     }
@@ -208,12 +212,38 @@ function showHeartsForImage(img, index) {
     const originalVelocity = { ...velocities[index] };
     velocities[index] = { x: 0, y: 0 }; // Stop the image
 
+    goodFriendship = Math.floor(Math.random()*100)+1;
+    highFriendship = Math.floor(Math.random()*100)+1;
+
+    if(goodFriendship > 50){
+        setTimeout(() => {
+            hearts.forEach((heart) => {
+                heart.style.transform = "scale(1.2)";
+            });
+        }, 1000);
+    }
+
+    if(highFriendship > 75){
+        setTimeout(() => {
+            hearts.forEach((heart) => {
+                heart.style.transform = "scale(1.75)";
+            });
+        }, 2000);
+    }
+
     setTimeout(() => {
         hearts.forEach((heart) => {
             heart.remove();
         });
         velocities[index] = originalVelocity; // Resume the image movement
-    }, 3000);
+    }, 4000);
+
+    // setTimeout(() => {
+    //     hearts.forEach((heart) => {
+    //         heart.remove();
+    //     });
+    //     velocities[index] = originalVelocity; // Resume the image movement
+    // }, 3000);
 
     const nextInterval = Math.random() * (maxInterval - minInterval) + minInterval; // Random interval between minInterval and maxInterval
     setTimeout(() => showHeartsForImage(img, index), nextInterval);
@@ -236,8 +266,9 @@ if (showHearts === 'true') {
 const showOverlay = getUrlParameter('overlay');
 if (showOverlay === 'true') {
     overlay.style.display = 'block';
-    overlay.style.backgroundColor = 'background-color: rgba(0, 121, 30, 0.329);'
-    container.style.backgroundColor = 'rgba(151, 250, 151, 0.596)';
+    // overlay.style.backgroundColor = 'background-color: rgba(0, 121, 30, 0.325);'
+    overlay.style.backgroundColor = 'rgba(111,175,111, 0.325)';
+    container.style.backgroundColor = 'rgba(111,175,111, 0.9)';
     images.forEach(img => {
         img.style.filter = 'grayscale(90%)';
     });

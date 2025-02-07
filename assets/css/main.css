@@ -4019,3 +4019,31 @@ input, select, textarea {
 	body.is-mobile.landing #footer {
 		background-color: #1d242a;
 	}
+
+/*Custom CSS*/
+
+.desktop-iframe {
+	width: 1176px;
+	height: 874px;
+	position: relative;
+}
+
+.mobile-iframe {
+	position: relative;
+	width: 1176px;
+	height: 875px;
+	left: -410px;
+	top: -325px;
+	scale: 0.3;
+	display: none;
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 500px) {
+    .desktop-iframe {
+        display: none; /* Reduce height on smaller screens */
+    }
+	.mobile-iframe {
+		display: block;
+	}
+}

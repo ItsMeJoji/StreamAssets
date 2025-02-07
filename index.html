@@ -5,6 +5,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="landing is-preload">
@@ -25,6 +26,10 @@
 											<li><a href="friendship-checker.html">Friendship Checker</a></li>
 											<li><a href="url-generator.html">URL Generator</a></li>
 											<li><a href="https://itsmejoji.github.io/ShinyPokemonBingoGenerator/" target="_blank">Shiny Bingo Generator</a></li>
+											<li></li>
+											<a href="https://bsky.app/profile/itsmejoji.com" class="fa-brands fa-bluesky"><span class="label"></span></a>
+											<a href="https://www.youtube.com/c/itsmejoji" class="fa-brands fa-youtube"><span class="label"></span></a>
+											<a href="https://www.twitch.tv/itsmejoji/" class="fa-brands fa-twitch"><span class="label"></span></a>
 										</ul>
 									</div>
 								</li>
@@ -51,19 +56,25 @@
 						<div class="inner">
 							<header class="major">
 								<h2>Friendship Checker</h2>
-								<p>This page is meant to simulate the Friendship Tracker from Pokemon Diamond, Pearl, and Platinum.<br />
-								You can use the URL Generator page to create a link with up to 5 Pokemon Sprites.</p>
+								<p>This page is meant to simulate the Friendship Checker from Pokemon Diamond, Pearl, and Platinum.<br />
+								You can use the URL Generator page to create a link with up to 6 Pokemon Sprites.</p>
 							</header>
-							<ul class="icons major">
-								<li>
-									<iframe src="friendship-checker.html?pokemon1=greninja-s&pokemon2=pikachu-sinnoh-cap&pokemon3=porygon-s
-												&pokemon4=magnemite-s&pokemon5=scizor-s&pokemon6=blastoise-s&friendship=true" width="1050" height="800" style="border:none; overflow:hidden; transform: scale(0.75);"></iframe>
-								</li>
-							</ul>
+							<iframe class="desktop-iframe" src="friendship-checker.html?pokemon1=greninja-s&pokemon2=pikachu-sinnoh-cap&pokemon3=porygon-s
+							&pokemon4=magnemite-s&pokemon5=scizor-s&pokemon6=blastoise-s&friendship=true&ds=true&overlay=true&scale=5"></iframe>
+							<iframe class="mobile-iframe" src="friendship-checker.html?pokemon1=greninja-s&pokemon2=pikachu-sinnoh-cap&pokemon3=porygon-s
+							&pokemon4=magnemite-s&pokemon5=scizor-s&pokemon6=blastoise-s&friendship=true&ds=true&overlay=true&scale=5"></iframe>
 							<!-- <a href="#two" class="more scrolly">More Assets!</a> -->
 						</div>
 					</section>
 
+					<section id="two" class="wrapper style2 special">
+						<div class="inner">
+							<header class="major">
+								<h2>Parasocial Checker</h2>
+								<p>Coming soon. Think of it as the Frienship Checker meets Twitch Chat.</p>
+							</header>
+						</div>
+					</section>
 				<!-- Two -->
 					<!-- <section id="two" class="wrapper alt style2">
 						<section class="spotlight">
@@ -143,10 +154,9 @@
 				<!-- Footer -->
 					<footer id="footer">
 						<ul class="icons">
-									<li><a href="https://bsky.app/profile/itsmejoji.com" class="fa-bluesky"><span class="label">BlueSky</span></a></li>
-									<li><a href="https://www.youtube.com/c/itsmejoji" class=""><span class="label">Youtube</span></a></li>
-									<li><a href="https://www.twitch.tv/itsmejoji/" class=""><span class="label">Twitch</span></a></li>
-									<li><a href="https://www.tiktok.com/@itsmejoji_" class=""><span class="label">TikTok</span></a></li>
+									<li><a href="https://bsky.app/profile/itsmejoji.com" class="fa-brands fa-bluesky"><span class="label"></span></a></li>
+									<li><a href="https://www.youtube.com/c/itsmejoji" class="fa-brands fa-youtube"><span class="label"></span></a></li>
+									<li><a href="https://www.twitch.tv/itsmejoji/" class="fa-brands fa-twitch"><span class="label"></span></a></li>
 						</ul>
 						<ul class="copyright">
 							<!-- <li>&copy; IMJ</li> -->
