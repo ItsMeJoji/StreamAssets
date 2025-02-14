@@ -178,7 +178,7 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         'itsmejoji': 'blastoise-s',
         'nightbot': 'porygon-z',
         'thomkeeris': 'sableye',
-        'sirtoastyt': 'scizor-s'
+        'sirtoastyt': 'scizor-s',
     }
     console.log('Adding new Pokémon for ' + chatter.user_name);
     function addPokemon() {
@@ -213,14 +213,16 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         messageElement.appendChild(emoteElement);
 
         // Shiny Check
-        const MAX_RANGE = 5;
+        const MAX_RANGE = 10;
         function getRandomNumber(max) {
             return Math.floor(Math.random() * max) + 1;
         }
         const randomNumber1 = getRandomNumber(MAX_RANGE);
         const randomNumber2 = getRandomNumber(MAX_RANGE);
-        if (randomNumber1 === randomNumber2) {
-            imageName = imageName + '-s';
+        if (!imageName.includes("-s")){
+            if (randomNumber1 === randomNumber2) {
+                imageName = imageName + '-s';
+            }
         }
 
         function imageExists(imagePath, modifier) {
@@ -525,6 +527,65 @@ function handleChannelPointRedemption(data) {
             const newPokemon = getRandomPokemon();
             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
             pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+            cropTransparent(pokemonElement);
+
+            console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+        } else {
+            console.warn(`User ${username} is not currently in the chat.`);
+        }
+    }
+
+    if (redemption.reward.title === 'Shiny Reroll'){
+        const username = redemption.user.login;
+
+        const index = existingUsernames.findIndex((name) => name === username);
+
+        if (index !== -1){
+            const newPokemon = getRandomPokemon();
+            const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+            
+            const MAX_RANGE = 3;
+            function getRandomNumber(max) {
+                return Math.floor(Math.random() * max) + 1;
+            }
+            const randomNumber1 = getRandomNumber(MAX_RANGE);
+            const randomNumber2 = getRandomNumber(MAX_RANGE);
+            if (randomNumber1 === randomNumber2) {
+                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
+            } else{
+                pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+            }
+        
+            cropTransparent(pokemonElement);
+
+            console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+        } else {
+            console.warn(`User ${username} is not currently in the chat.`);
+        }
+    }
+
+    if (redemption.reward.title === 'Choose Your Pokemon'){
+        const username = redemption.user.login;
+        const userInput = redemption.user_input;
+
+        const index = existingUsernames.findIndex((name) => name === username);
+
+        if (index !== -1){
+            const newPokemon = userInput
+            const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+            
+            const MAX_RANGE = 3;
+            function getRandomNumber(max) {
+                return Math.floor(Math.random() * max) + 1;
+            }
+            const randomNumber1 = getRandomNumber(MAX_RANGE);
+            const randomNumber2 = getRandomNumber(MAX_RANGE);
+            if (randomNumber1 === randomNumber2) {
+                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
+            } else{
+                pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+            }
+        
             cropTransparent(pokemonElement);
 
             console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
