@@ -110,7 +110,7 @@ for (let i = 1; i <= 6; i++) {
             }
         });
     } else if (i != 1 && !imageName) {
-        imgElement.style.display = 'none';
+        imgElement.remove();
     }
     
 }
@@ -142,8 +142,7 @@ function updatePosition() {
                 const otherPosY = parseFloat(otherImg.style.top) || 0;
 
                 // Define collision area
-                const collisionSize = 90;
-                const halfCollisionSize = collisionSize / 2;
+                const collisionSize = 75;
 
                 const imgCenterX = posX + img.width / 2;
                 const imgCenterY = posY + img.height / 2;

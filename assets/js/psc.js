@@ -734,7 +734,7 @@ if (accessToken) {
             // });
 
             // Listen to deleted messages
-            client.on('messagedeleted', (channel, username, deletedMessage, userstate) => {
+            client.on('ban', (channel, username, deletedMessage, userstate) => {
                 // Find the index of the deleted user's Pokémon
                 const index = chatters.findIndex(chatter => chatter.user_name === username);
 
@@ -753,6 +753,49 @@ if (accessToken) {
                     existingUsernames.splice(existingUsernames.indexOf(username), 1);
                 }
             });
+
+            // Listen for Bans
+            client.on('ban', (channel, username, reason, userstate) => {
+                // Find the index of the deleted user's Pokémon
+                const index = chatters.findIndex(chatter => chatter.user_name === username);
+
+                if (index !== -1) {
+                    // Remove Pokémon, username, and message elements from the DOM
+                    const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+                    const usernameElement = document.getElementById(`username${index + 1}`);
+                    const messageElement = document.getElementById(`message${index + 1}`);
+
+                    if (pokemonElement) pokemonElement.remove();
+                    if (usernameElement) usernameElement.remove();
+                    if (messageElement) messageElement.remove();
+
+                    // Remove user from chatters and existingUsernames arrays
+                    chatters.splice(index, 1);
+                    existingUsernames.splice(existingUsernames.indexOf(username), 1);
+                }
+            });
+
+            // Listen for Timeouts
+            client.on('timeout', (channel, username, duration, reason, userstate) => {
+                // Find the index of the deleted user's Pokémon
+                const index = chatters.findIndex(chatter => chatter.user_name === username);
+
+                if (index !== -1) {
+                    // Remove Pokémon, username, and message elements from the DOM
+                    const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+                    const usernameElement = document.getElementById(`username${index + 1}`);
+                    const messageElement = document.getElementById(`message${index + 1}`);
+
+                    if (pokemonElement) pokemonElement.remove();
+                    if (usernameElement) usernameElement.remove();
+                    if (messageElement) messageElement.remove();
+
+                    // Remove user from chatters and existingUsernames arrays
+                    chatters.splice(index, 1);
+                    existingUsernames.splice(existingUsernames.indexOf(username), 1);
+                }
+            });
+
 
         })
         .catch(error => console.error(error));

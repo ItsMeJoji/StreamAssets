@@ -4039,7 +4039,7 @@ input, select, textarea {
 }
 
 /* Adjust for smaller screens */
-@media (max-width: 500px) {
+@media (max-width: 800px) {
     .desktop-iframe {
         display: none; /* Reduce height on smaller screens */
     }
