@@ -1,4 +1,4 @@
-const version = '0.7.12';
+const version = '0.7.13';
 
 $(document).ready(function() {
     $('#footer h6').html(`Version ${version} - Created by <a href="https://itsmejoji.com" target="_blank">ItsMeJoji</a><br/>Images are from the official Pokémon games and are used for non-commercial purposes.`);

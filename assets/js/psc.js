@@ -179,6 +179,7 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         'nightbot': 'porygon-z',
         'thomkeeris': 'sableye',
         'sirtoastyt': 'scizor-s',
+        'cherrius_': 'deoxys',
     }
     console.log('Adding new Pokémon for ' + chatter.user_name);
     function addPokemon() {
