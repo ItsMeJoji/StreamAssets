@@ -1,8 +1,9 @@
 
 
 const container = document.getElementById('container');
-const speedAdjust = 0.5; // Adjust the speed of the bouncing images as needed
+const speedAdjust = 0.4; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
+const velocities = [];
 
 // Function to get URL parameters
 function getUrlParameter(name) {
@@ -69,107 +70,6 @@ function getRandomPokemon() {
 }
 
 // Function to create and append Pokémon images and usernames
-function createPokemonAndUsernames(chatters) {
-    let index = 0;
-
-    function addPokemon() {
-        if (index >= chatters.length) {
-            return;
-        }
-
-        let imageName = getRandomPokemon();
-        const imgElement = document.createElement('img');
-        imgElement.className = 'bouncingImage';
-        imgElement.id = `pokemon${index + 1}`;
-        imgElement.alt = `Pokemon ${index + 1}`;
-
-        const usernameElement = document.createElement('div');
-        usernameElement.className = 'username';
-        usernameElement.id = `username${index + 1}`;
-        usernameElement.textContent = chatters[index].user_name;
-
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message';
-        messageElement.id = `message${index + 1}`;
-
-        const emoteElement = document.createElement('img');
-        emoteElement.className = 'emote';
-        emoteElement.id = `emote${index + 1}`;
-        emoteElement.style.display = 'none'
-
-        container.appendChild(imgElement);
-        container.appendChild(usernameElement);
-        container.appendChild(messageElement);
-        messageElement.appendChild(emoteElement);
-
-        // Shiny Check
-        const MAX_RANGE = 10;
-        function getRandomNumber(max) {
-            return Math.floor(Math.random() * max) + 1;
-        }
-        const randomNumber1 = getRandomNumber(MAX_RANGE);
-        const randomNumber2 = getRandomNumber(MAX_RANGE);
-        if (randomNumber1 === randomNumber2) {
-            imageName = imageName + '-s';
-        }
-
-        function imageExists(imagePath, modifier) {
-            if (imagePath) {
-                return imagePath;
-            } else {
-                return 'assets/images/Pokemon/' + imageName.replace(modifier, '') + '.png';
-            }
-        }
-
-        let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
-        if (imageName.endsWith('-f-s')) {
-            const modifier = '-f-s';
-            imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0, -4) + '.png';
-            imagePath = imageExists(imagePath, modifier);
-            imgElement.src = imagePath;
-            cropTransparent(imgElement);
-        } else if (imageName.endsWith('-f')) {
-            const modifier = '-f';
-            imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0, -2) + '.png';
-            imagePath = imageExists(imagePath, modifier);
-            imgElement.src = imagePath;
-            cropTransparent(imgElement);
-        } else if (imageName.endsWith('-s')) {
-            const modifier = '-s';
-            imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0, -2) + '.png';
-            imagePath = imageExists(imagePath, modifier);
-            imgElement.src = imagePath;
-            cropTransparent(imgElement);
-        } else {
-            imgElement.src = imagePath;
-            cropTransparent(imgElement);
-        }
-
-        // Initialize positions at the top left corner
-        const posX = padding;
-        const posY = padding;
-
-        imgElement.style.left = `${posX}px`;
-        imgElement.style.top = `${posY}px`;
-        usernameElement.style.left = `${posX}px`;
-        usernameElement.style.top = `${posY + imgElement.height}px`;
-        messageElement.style.left = `${posX}px`;
-        messageElement.style.top = `${posY + imgElement.height}px`;
-        emoteElement.style.left = `${posX}px`;
-        emoteElement.style.top = `${posY + imgElement.height}px`;
-
-        velocities.push({
-            x: (Math.random() * 4 - 2) * speedAdjust,
-            y: (Math.random() * 4 - 2) * speedAdjust
-        });
-
-        index++;
-        setTimeout(addPokemon, 3000); // Add the next Pokémon after 3 seconds
-    }
-
-    addPokemon();
-    updatePosition();
-}
 
 function addNewPokemonAndUsernames(chatter, previousIndex) {
     let index = previousIndex;
@@ -284,9 +184,13 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
 }
 
 
-const velocities = [];
+isUpdating = false;
 
 function updatePosition() {
+
+    if (isUpdating) return;
+    isUpdating = true;
+
     const images = document.querySelectorAll('.bouncingImage');
     const usernames = document.querySelectorAll('.username');
     const messages = document.querySelectorAll('.message');
@@ -349,6 +253,7 @@ function updatePosition() {
         // emotes[index].style.top = `${posY + 50}px`;
     });
 
+    isUpdating = false;
     requestAnimationFrame(updatePosition);
 }
 
