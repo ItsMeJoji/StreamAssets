@@ -49,8 +49,8 @@ function retrieveAccessToken() {
 
 const urlParams = retrieveUrlParameters();
 const clientId = urlParams.client_id || getUrlParameter('client_id');
-const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
 const username = urlParams.username || getUrlParameter('username');
 const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
 const youtubeAPI = urlParams.youtube_api || getUrlParameter('youtube_api');
@@ -486,8 +486,8 @@ function handleChannelPointRedemption(data) {
             }
             const randomNumber1 = getRandomNumber(MAX_RANGE);
             const randomNumber2 = getRandomNumber(MAX_RANGE);
-            if (randomNumber1 === randomNumber2) {
-                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
+            if (newPokemon.endsWith('-s')){
+                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon.replace('-s','')}.png`;
             } else{
                 pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
             }
