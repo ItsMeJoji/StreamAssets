@@ -80,6 +80,8 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         'thomkeeris': 'sableye',
         'sirtoastyt': 'scizor-s',
         'cherrius_': 'deoxys',
+        'welcome2therage': 'zygarde-complete-s',
+        'sd-z-yt': 'gengar-mega-s',
     }
     console.log('Adding new Pokémon for ' + chatter.user_name);
     function addPokemon() {
