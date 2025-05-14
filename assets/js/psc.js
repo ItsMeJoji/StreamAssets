@@ -386,11 +386,11 @@ async function fetchChatUsers(channelId, moderatorId, accessToken) {
 
 }
 
-function connectToPubSub(accessToken, broadcasterId) {
-    const socket = new WebSocket('wss://pubsub-edge.twitch.tv');
+function connectToEventSub(accessToken, broadcasterId) {
+    const socket = new WebSocket('wss://eventsub.wss.twitch.tv/ws');
 
     socket.onopen = () => {
-        console.log('Connected to PubSub');
+        console.log('Connected to EventSub');
         const message = {
             type: 'LISTEN',
             nonce: Math.random().toString(36).substring(7),
@@ -404,7 +404,7 @@ function connectToPubSub(accessToken, broadcasterId) {
 
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log('PubSub message:', message);
+        console.log('EventSub message:', message);
         // Check for redemption events
         if (message.type === 'MESSAGE') {
             const redemptionData = JSON.parse(message.data.message);
@@ -413,12 +413,12 @@ function connectToPubSub(accessToken, broadcasterId) {
     };
 
     socket.onerror = (error) => {
-        console.error('PubSub error:', error);
+        console.error('EventSub error:', error);
     };
 
     socket.onclose = () => {
-        console.warn('PubSub connection closed. Reconnecting in 10 seconds...');
-        setTimeout(() => connectToPubSub(accessToken, broadcasterId), 10000);
+        console.warn('EventSub connection closed. Reconnecting in 10 seconds...');
+        setTimeout(() => connectToEventSub(accessToken, broadcasterId), 10000);
     };
 }
 
@@ -549,7 +549,7 @@ if (accessToken) {
     storeAccessToken(accessToken);
     Promise.all([fetchChannelId(username, accessToken), fetchModeratorId(moderatorUsername, accessToken)])
         .then(([channelId, moderatorId]) => {
-            connectToPubSub(accessToken, channelId);
+            connectToEventSub(accessToken, channelId);
             fetchChatUsers(channelId, moderatorId, accessToken);
 
             const chatters = [];
