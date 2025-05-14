@@ -427,7 +427,7 @@ function handleChannelPointRedemption(data) {
     console.log("Redemption data:", data.data);
     const redemption = data.data.redemption;
 
-    if (redemption.reward.title === 'Reroll Pokemon') {
+    if (redemption.reward.title === 'Pokemon Overlay Reroll') {
         const username = redemption.user.login;
 
         const index = existingUsernames.findIndex((name) => name === username);
@@ -444,7 +444,7 @@ function handleChannelPointRedemption(data) {
         }
     }
 
-    if (redemption.reward.title === 'Shiny Reroll'){
+    if (redemption.reward.title === 'Shiny Pokemon Overlay Reroll'){
         const username = redemption.user.login;
 
         const index = existingUsernames.findIndex((name) => name === username);
@@ -473,7 +473,7 @@ function handleChannelPointRedemption(data) {
         }
     }
 
-    if (redemption.reward.title === 'Choose Your Pokemon'){
+    if (redemption.reward.title === 'Choose Your Pokemon on the Overlay!'){
         const username = redemption.user.login;
         const userInput = redemption.user_input;
 
