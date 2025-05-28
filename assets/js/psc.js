@@ -1,5 +1,4 @@
-
-
+let client;
 const container = document.getElementById('container');
 const speedAdjust = 0.4; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
@@ -81,7 +80,7 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         'sirtoastyt': 'scizor-s',
         'cherrius_': 'deoxys',
         'welcome2therage': 'zygarde-complete-s',
-        'sd_z_yt': 'gengar-mega-s',
+        'sd_z_yt2': 'gengar-mega-s',
         'katfreak101': 'liepard-s'
     }
     console.log('Adding new Pokémon for ' + chatter.user_name);
@@ -327,7 +326,7 @@ function getScale(img){
 
 function authenticate() {
     storeUrlParameters();
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+moderator:read:chatters+channel:read:redemptions`;
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=chat:read+chat:edit+moderator:read:chatters+channel:read:redemptions`;
     window.location.href = authUrl;
 }
 
@@ -387,28 +386,27 @@ async function fetchChatUsers(channelId, moderatorId, accessToken) {
 }
 
 function connectToEventSub(accessToken, broadcasterId) {
-    const socket = new WebSocket('wss://eventsub.wss.twitch.tv/ws');
+    const socket = new WebSocket('wss://eventsub.wss.twitch.tv/ws?keepalive_timeout_seconds=60');
 
     socket.onopen = () => {
         console.log('Connected to EventSub');
-        const message = {
-            type: 'LISTEN',
-            nonce: Math.random().toString(36).substring(7),
-            data: {
-                topics: [`channel-points-channel-v1.${broadcasterId}`],
-                auth_token: accessToken,
-            },
-        };
-        socket.send(JSON.stringify(message));
     };
 
-    socket.onmessage = (event) => {
+    socket.onmessage = async (event) => {
         const message = JSON.parse(event.data);
         console.log('EventSub message:', message);
-        // Check for redemption events
-        if (message.type === 'MESSAGE') {
-            const redemptionData = JSON.parse(message.data.message);
-            handleChannelPointRedemption(redemptionData);
+
+        // On welcome, register the subscription
+        if (message.metadata && message.metadata.message_type === 'session_welcome') {
+            const sessionId = message.payload.session.id;
+            // Register the subscription using the REST API
+            await createChannelPointsRedemptionSubscription(accessToken, broadcasterId, sessionId);
+        }
+
+        // Handle incoming events
+        if (message.metadata && message.metadata.message_type === 'notification') {
+            const redemptionData = message.payload.event;
+            handleChannelPointRedemption({ data: { redemption: redemptionData } });
         }
     };
 
@@ -422,13 +420,43 @@ function connectToEventSub(accessToken, broadcasterId) {
     };
 }
 
+// Helper to create the EventSub subscription via REST API
+async function createChannelPointsRedemptionSubscription(accessToken, broadcasterId, sessionId) {
+    const response = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
+        method: 'POST',
+        headers: {
+            'Client-ID': clientId,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            type: 'channel.channel_points_custom_reward_redemption.add',
+            version: '1',
+            condition: {
+                broadcaster_user_id: broadcasterId
+            },
+            transport: {
+                method: 'websocket',
+                session_id: sessionId
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to create EventSub subscription:', errorData);
+    } else {
+        console.log('EventSub subscription created');
+    }
+}
 
 function handleChannelPointRedemption(data) {
     console.log("Redemption data:", data.data);
     const redemption = data.data.redemption;
+    const channelName = `#${username}`;
 
     if (redemption.reward.title === 'Pokemon Overlay Reroll') {
-        const username = redemption.user.login;
+        const username = redemption.user_login;
 
         const index = existingUsernames.findIndex((name) => name === username);
 
@@ -438,21 +466,26 @@ function handleChannelPointRedemption(data) {
             pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
             cropTransparent(pokemonElement);
 
-            console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+            const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
+            console.log(msg);
+            if (typeof client !== "undefined") {
+                client.say(channelName, msg); // Sends message to the channel
+            }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
         }
     }
 
-    if (redemption.reward.title === 'Shiny Pokemon Overlay Reroll'){
-        const username = redemption.user.login;
+    else if (redemption.reward.title === 'Shiny Pokemon Overlay Reroll'){
+        const username = redemption.user_login;
 
         const index = existingUsernames.findIndex((name) => name === username);
 
         if (index !== -1){
             const newPokemon = getRandomPokemon();
             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
-            
+            let shiny = '';
+
             const MAX_RANGE = 3;
             function getRandomNumber(max) {
                 return Math.floor(Math.random() * max) + 1;
@@ -461,20 +494,25 @@ function handleChannelPointRedemption(data) {
             const randomNumber2 = getRandomNumber(MAX_RANGE);
             if (randomNumber1 === randomNumber2) {
                 pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
+                shiny = 'Shiny';
             } else{
                 pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
             }
         
             cropTransparent(pokemonElement);
 
-            console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+            const msg = `${username} rerolled their Pokémon to ${shiny} ${newPokemon}`;
+            console.log(msg);
+            if (typeof client !== "undefined") {
+                client.say(channelName, msg); // Sends message to the channel
+            }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
         }
     }
 
-    if (redemption.reward.title === 'Choose Your Pokemon on the Overlay!'){
-        const username = redemption.user.login;
+    else if (redemption.reward.title === 'Choose Your Pokemon on the Overlay!'){
+        const username = redemption.user_login;
         const userInput = redemption.user_input;
 
         const index = existingUsernames.findIndex((name) => name === username);
@@ -497,10 +535,17 @@ function handleChannelPointRedemption(data) {
         
             cropTransparent(pokemonElement);
 
-            console.log(`${username} rerolled their Pokémon to ${newPokemon}`);
+            const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
+            console.log(msg);
+            if (typeof client !== "undefined") {
+                client.say(channelName, msg); // Sends message to the channel
+            }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
         }
+    }
+    else {
+        console.warn(`Unhandled redemption: ${redemption.reward.title}`);
     }
 }
 
@@ -554,7 +599,7 @@ if (accessToken) {
 
             const chatters = [];
 
-            const client = new tmi.Client({
+            client = new tmi.Client({
                 options: { debug: true },
                 identity: {
                     username: username,
