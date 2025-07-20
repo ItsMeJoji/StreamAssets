@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friendship Checker Poketch App</title>
+    <style>
+        #container {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            border: 50px solid black;
+            border-radius: 20px;
+            overflow: hidden;
+            padding: 76px;
+            box-sizing: border-box;
+        }
+        .bouncingImage {
+            position: absolute;
+            width: 50px; /* Default width for images */
+            height: 50px; /* Default height for images */
+            z-index: 1;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="overlay" id="overlay"></div>
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+
+    <script>
+        container = document.getElementById('container');
+
+        // Function to create and add bouncing images dynamically
+        function createBouncingImages(count) {
+            for (let i = 1; i <= count; i++) {
+                const img = document.createElement('img');
+                img.className = 'bouncingImage';
+                img.id = `pokemon${i}`;
+                img.src = `https://via.placeholder.com/50?text=Pokemon${i}`; // Placeholder image
+                img.alt = `Bouncing Image ${i}`;
+                img.style.left = `${Math.random() * (container.offsetWidth - 500)}px`;
+                img.style.top = `${Math.random() * (container.offsetHeight - 500)}px`;
+                container.appendChild(img);
+            }
+        }
+
+        // Create 30 bouncing images
+        createBouncingImages(30);
+    </script>
+    <script src="assets/js/arrays.js"></script>
+    <script src="./assets/js/fc.js"></script>
+</body>
+</html>

@@ -417,8 +417,8 @@ function connectToEventSub(accessToken, broadcasterId) {
     };
 
     socket.onclose = () => {
-        console.warn('EventSub connection closed. Reconnecting in 10 seconds...');
-        setTimeout(() => connectToEventSub(accessToken, broadcasterId), 10000);
+        console.warn('EventSub connection closed. Reconnecting in 100 seconds...');
+        setTimeout(() => connectToEventSub(accessToken, broadcasterId), 100000);
     };
 }
 

@@ -80,39 +80,60 @@ function cropTransparent(imgElement) {
     };
 }
 
-// Set image sources based on URL parameters
-for (let i = 1; i <= 6; i++) {
-    const imageName = getUrlParameter('pokemon' + i).toLowerCase();
-    const imgElement = document.getElementById('pokemon' + i);
-    if (imageName) {
-        let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
-        if (imageName.endsWith('-f-s')) {
-            imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0,-4) + '.png';
-        } else if (imageName.endsWith('-f')) {
-            imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0,-2) + '.png';
-        } else if (imageName.endsWith('-s')) {
-            imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0,-2) + '.png';
+const isRandom = getUrlParameter('random') === 'true';
+if (isRandom) {
+    // Generate 30 random Pokémon
+    for (let i = 1; i <= 30; i++) {
+        const randomPokemon = getRandomPokemon(); // Use the getRandomPokemon function
+        const imgElement = document.getElementById('pokemon' + i);
+
+        if (imgElement) {
+            const imagePath = 'assets/images/Pokemon/' + randomPokemon + '.png';
+            imageExists(imagePath, (exists) => {
+                if (exists) {
+                    imgElement.src = imagePath;
+                    cropTransparent(imgElement);
+                } else {
+                    imgElement.alt = 'Image not Found';
+                }
+            });
         }
-        imageExists(imagePath, (exists) => {
-            if (exists) {
-                imgElement.src = imagePath;
-                cropTransparent(imgElement);
-            } else {
-                const regularImagePath = 'assets/images/Pokemon/' + imageName.slice(0,-2) + '.png';
-                imageExists(regularImagePath, (exists) => {
-                    if (exists) {
-                        imgElement.src = regularImagePath;
-                        cropTransparent(imgElement);
-                    } else {
-                        imgElement.alt = 'Image not Found';
-                    }
-                });
-            }
-        });
-    } else if (i != 1 && !imageName) {
-        imgElement.remove();
     }
-    
+} else {
+    // Set image sources based on URL parameters
+    for (let i = 1; i <= 6; i++) {
+        const imageName = getUrlParameter('pokemon' + i).toLowerCase();
+        const imgElement = document.getElementById('pokemon' + i);
+        if (imageName) {
+            let imagePath = 'assets/images/Pokemon/' + imageName + '.png';
+            if (imageName.endsWith('-f-s')) {
+                imagePath = 'assets/images/Pokemon/shiny/female/' + imageName.slice(0,-4) + '.png';
+            } else if (imageName.endsWith('-f')) {
+                imagePath = 'assets/images/Pokemon/female/' + imageName.slice(0,-2) + '.png';
+            } else if (imageName.endsWith('-s')) {
+                imagePath = 'assets/images/Pokemon/shiny/' + imageName.slice(0,-2) + '.png';
+            }
+            imageExists(imagePath, (exists) => {
+                if (exists) {
+                    imgElement.src = imagePath;
+                    cropTransparent(imgElement);
+                } else {
+                    const regularImagePath = 'assets/images/Pokemon/' + imageName.slice(0,-2) + '.png';
+                    imageExists(regularImagePath, (exists) => {
+                        if (exists) {
+                            imgElement.src = regularImagePath;
+                            cropTransparent(imgElement);
+                        } else {
+                            imgElement.alt = 'Image not Found';
+                        }
+                    });
+                }
+            });
+        } else if (i != 1 && !imageName) {
+            imgElement.remove();
+        }
+        
+    }
 }
 
 
@@ -120,6 +141,11 @@ const velocities = Array.from(images).map(() => ({
     x: (Math.random() * 4 - 2) * speedAdjust,
     y: (Math.random() * 4 - 2) * speedAdjust  
 }));
+
+function getRandomPokemon() {
+    const randomIndex = Math.floor(Math.random() * availablePokemon.length);
+    return availablePokemon[randomIndex];
+}
 
 function updatePosition() {
     images.forEach((img, index) => {
@@ -142,7 +168,7 @@ function updatePosition() {
                 const otherPosY = parseFloat(otherImg.style.top) || 0;
 
                 // Define collision area
-                const collisionSize = 75;
+                const collisionSize = 25;
 
                 const imgCenterX = posX + img.width / 2;
                 const imgCenterY = posY + img.height / 2;
