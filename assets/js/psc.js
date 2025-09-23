@@ -1,6 +1,6 @@
 let client;
 const container = document.getElementById('container');
-const speedAdjust = 0.4; // Adjust the speed of the bouncing images as needed
+const speedAdjust = 0.5; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
 const velocities = [];
 
@@ -75,7 +75,7 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
 
     const specialUsers = {
         'itsmejoji': 'blastoise-s',
-        'nightbot': 'porygon-z',
+        'nightbot': 'porygon-s',
         'thomkeeris': 'sableye',
         'sirtoastyt': 'scizor-s',
         'cherrius_': 'deoxys',
@@ -173,14 +173,18 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         emoteElement.style.left = `${posX}px`;
         emoteElement.style.top = `${posY + imgElement.height}px`;
 
+        
         velocities.push({
-            x: (Math.random() * 4 - 2) * speedAdjust,
-            y: (Math.random() * 4 - 2) * speedAdjust
+            x: (Math.random() * 2 - 1) * speedAdjust,
+            y: (Math.random() * 2 - 1) * speedAdjust
         });
+        if (chatter.user_name === 'itsmejoji') 
+        {
+            updatePosition();
+        }
     }
 
     addPokemon();
-    updatePosition();
 
     console.log('New Pokémon added for ' + chatter.user_name);
 }
@@ -633,7 +637,13 @@ if (accessToken) {
                         addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
                         console.log('New User Added:' + username);
                     }
-                    
+
+                // Listen for a specific command from "ItsMeJoji"
+                if (username === 'itsmejoji' && message.trim() === '!spawn') {
+                    console.log('Spawn command received from ItsMeJoji');
+                    spawnRandomPokemon();
+                }                    
+
                 console.log('Badges:', badges);
                 if (isBroadcaster || isModerator || isSubscriber || isVip) {
 
@@ -667,6 +677,19 @@ if (accessToken) {
                 }
 
             });
+
+let testUserCounter = 1; // Initialize a counter for test usernames            
+
+// Function to spawn a random Pokémon
+function spawnRandomPokemon() {
+    const username = `Test_${String(testUserCounter).padStart(2, '0')}`; // Generate username like Test_01, Test_02, etc.
+    testUserCounter++; // Increment the counter for the next spawn
+
+    // Add the new Pokémon and username
+    addNewPokemonAndUsernames({ user_name: username }, chatters.length);
+
+    console.log('Spawning random Pokémon for:', username);
+}
 
             // Listen to users joining the channel
             // client.on('join', (channel, username, self) => {
