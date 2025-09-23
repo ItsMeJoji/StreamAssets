@@ -1,6 +1,6 @@
 let client;
 const container = document.getElementById('container');
-const speedAdjust = 0.5; // Adjust the speed of the bouncing images as needed
+const speedAdjust = 0.75; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
 const velocities = [];
 
@@ -639,10 +639,26 @@ if (accessToken) {
                     }
 
                 // Listen for a specific command from "ItsMeJoji"
+                
+                // Spawn Test Pokemon
                 if (username === 'itsmejoji' && message.trim() === '!spawn') {
                     console.log('Spawn command received from ItsMeJoji');
                     spawnRandomPokemon();
                 }                    
+                // Reset Overlay
+                if (username === 'itsmejoji' && message.trim() === '!reset') {
+                    console.log('Reset command received from ItsMeJoji');
+                    resetPokemonAndUsers();
+                }
+                // Reset Specific User
+                if (username === 'itsmejoji' && message.startsWith('!reset-')) {
+                    const targetUsername = message.split('!reset-')[1].trim(); // Extract the target username
+                    if (targetUsername) {
+                        resetSpecificUser(targetUsername);
+                    } else {
+                        console.log('Invalid reset command. No username specified.');
+                    }
+                }
 
                 console.log('Badges:', badges);
                 if (isBroadcaster || isModerator || isSubscriber || isVip) {
@@ -680,7 +696,9 @@ if (accessToken) {
 
 let testUserCounter = 1; // Initialize a counter for test usernames            
 
-// Function to spawn a random Pokémon
+// Functions for Commands
+
+
 function spawnRandomPokemon() {
     const username = `Test_${String(testUserCounter).padStart(2, '0')}`; // Generate username like Test_01, Test_02, etc.
     testUserCounter++; // Increment the counter for the next spawn
@@ -690,6 +708,70 @@ function spawnRandomPokemon() {
 
     console.log('Spawning random Pokémon for:', username);
 }
+
+function resetPokemonAndUsers() {
+    console.log('Resetting Pokémon and users...');
+
+    // Clear existing Pokémon and usernames from the overlay
+    chatters.forEach((_, index) => {
+        const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+        const usernameElement = document.getElementById(`username${index + 1}`);
+        const messageElement = document.getElementById(`message${index + 1}`);
+        const emoteElement = document.getElementById(`emote${index + 1}`);
+
+        if (pokemonElement) pokemonElement.remove();
+        if (usernameElement) usernameElement.remove();
+        if (messageElement) messageElement.remove();
+        if (emoteElement) emoteElement.remove();
+    });
+
+    let index = 0;
+
+    function spawnNext() {
+        if (index < chatters.length) {
+            const chatter = chatters[index];
+            addNewPokemonAndUsernames(chatter, index);
+            console.log(`Spawned Pokémon for user: ${chatter.user_name}`);
+            index++;
+            setTimeout(spawnNext, 1000); // Wait 1 second before spawning the next Pokémon
+        } else {
+            console.log('All Pokémon and users have been reset.');
+        }
+    }
+
+    spawnNext(); // Start the spawning process
+}
+
+//Never reset yourself unless you want lightspeed
+function resetSpecificUser(targetUsername) {
+    console.log(`Resetting Pokémon and overlay for user: ${targetUsername}`);
+
+    // Find the index of the target user in the chatters array
+    const userIndex = chatters.findIndex(chatter => chatter.user_name === targetUsername);
+
+    if (userIndex === -1) {
+        console.log(`User ${targetUsername} not found.`);
+        return;
+    }
+
+    // Remove existing Pokémon and overlay elements for the target user
+    const pokemonElement = document.getElementById(`pokemon${userIndex + 1}`);
+    const usernameElement = document.getElementById(`username${userIndex + 1}`);
+    const messageElement = document.getElementById(`message${userIndex + 1}`);
+    const emoteElement = document.getElementById(`emote${userIndex + 1}`);
+
+    if (pokemonElement) pokemonElement.remove();
+    if (usernameElement) usernameElement.remove();
+    if (messageElement) messageElement.remove();
+    if (emoteElement) emoteElement.remove();
+
+    // Respawn the Pokémon and overlay for the target user
+    addNewPokemonAndUsernames(chatters[userIndex], userIndex);
+    console.log(`Respawned Pokémon for user: ${targetUsername}`);
+}
+
+
+
 
             // Listen to users joining the channel
             // client.on('join', (channel, username, self) => {
