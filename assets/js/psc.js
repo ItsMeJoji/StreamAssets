@@ -515,6 +515,38 @@ function handleChannelPointRedemption(data) {
         }
     }
 
+    else if (redemption.reward.title === 'Dynamax!')
+        {
+        const username = redemption.user_login;
+
+        const index = existingUsernames.findIndex((name) => name === username);
+
+        if (index !== -1) {
+            const pokemonElement = document.getElementById(`pokemon${index + 1}`);
+            if (pokemonElement) {
+                // Increase the scale of the Pokémon by 2
+                pokemonElement.style.transform = 'scale(2)';
+                pokemonElement.style.transition = 'transform 0.5s ease'; // Smooth scaling
+
+                const msg = `${username} Dynamaxed their Pokémon!`;
+                console.log(msg);
+                if (typeof client !== "undefined") {
+                    client.say(channelName, msg); // Sends message to the channel
+                }
+
+            setTimeout(() => {
+                    pokemonElement.style.transform = 'scale(1)'; // Reset scale to normal
+                    console.log(`${username}'s Pokémon has returned to its normal size.`);
+                    if (typeof client !== "undefined") {
+                        client.say(channelName, `${username}'s Pokémon has returned to its normal size.`);
+                    }
+                }, 60000); // 60 seconds                
+            }
+        } else {
+            console.warn(`User ${username} is not currently in the chat.`);
+        }
+        }
+
     else if (redemption.reward.title === 'Choose Your Pokemon on the Overlay!'){
         const username = redemption.user_login;
         const userInput = redemption.user_input;
