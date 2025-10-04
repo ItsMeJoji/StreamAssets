@@ -3,6 +3,7 @@ const container = document.getElementById('container');
 const speedAdjust = 0.75; // Adjust the speed of the bouncing images as needed
 const padding = 50; // Padding from the edges and between elements
 const velocities = [];
+const dynamaxState = []; // Tracks which Pokémon are Dynamaxxed
 
 // Function to get URL parameters
 function getUrlParameter(name) {
@@ -48,8 +49,8 @@ function retrieveAccessToken() {
 
 const urlParams = retrieveUrlParameters();
 const clientId = urlParams.client_id || getUrlParameter('client_id');
-const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
 const username = urlParams.username || getUrlParameter('username');
 const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
 const youtubeAPI = urlParams.youtube_api || getUrlParameter('youtube_api');
@@ -252,9 +253,16 @@ function updatePosition() {
         img.style.left = posX + 'px';
         img.style.top = posY + 'px';
         usernames[index].style.left = `${posX - 20}px`;
-        usernames[index].style.top = `${posY + img.height}px`;
         messages[index].style.left = `${posX - 20}px`;
-        messages[index].style.top = `${posY + 5}px`;
+
+        if (dynamaxState[index]) {
+            usernames[index].style.top = `${posY + img.height * 2}px`;
+            messages[index].style.top = `${posY + 5}px`;
+        }
+        else {
+            usernames[index].style.top = `${posY + img.height}px`;
+            messages[index].style.top = `${posY + 5}px`;
+        }
         // emotes[index].style.left = `${posX}px`;
         // emotes[index].style.top = `${posY + 50}px`;
     });
@@ -523,10 +531,30 @@ function handleChannelPointRedemption(data) {
 
         if (index !== -1) {
             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
-            if (pokemonElement) {
-                // Increase the scale of the Pokémon by 2
-                pokemonElement.style.transform = 'scale(2)';
-                pokemonElement.style.transition = 'transform 0.5s ease'; // Smooth scaling
+            const usernameElement = document.getElementById(`username${index + 1}`);
+            const messageElement = document.getElementById(`message${index + 1}`);
+
+            if (pokemonElement && usernameElement && messageElement) {
+
+                const { scaleX, scaleY } = getScale(pokemonElement);
+
+                // Dynamax the Pokémon by doubling its current scale
+                const newScaleX = scaleX * 3;
+                const newScaleY = scaleY * 3;
+
+                pokemonElement.style.transform = `scale(${newScaleX}, ${newScaleY})`;
+            
+                // Adjust the positions of the username and message
+                const originalUsernameTop = parseFloat(usernameElement.style.top) || 0;
+                const originalMessageTop = parseFloat(messageElement.style.top) || 0;
+
+                const newUsernameTop = originalUsernameTop + pokemonElement.offsetHeight;
+                const newMessageTop = parseFloat(pokemonElement.style.top) - messageElement.offsetHeight;
+
+                usernameElement.style.top = `${newUsernameTop}px`;
+                messageElement.style.top = `${newMessageTop}px`;
+
+                dynamaxState[index] = true; // Mark this Pokémon as Dynamaxxed
 
                 const msg = `${username} Dynamaxed their Pokémon!`;
                 console.log(msg);
@@ -535,12 +563,17 @@ function handleChannelPointRedemption(data) {
                 }
 
             setTimeout(() => {
-                    pokemonElement.style.transform = 'scale(1)'; // Reset scale to normal
+                pokemonElement.style.transform = `scale(${scaleX}, ${scaleY})`; // Reset scale to original
+                usernameElement.style.top = `${originalUsernameTop}px`; // Reset username position
+                messageElement.style.top = `${originalMessageTop}px`; // Reset message position
+
+                dynamaxState[index] = false; // Reset Dynamax state
+                    
                     console.log(`${username}'s Pokémon has returned to its normal size.`);
                     if (typeof client !== "undefined") {
                         client.say(channelName, `${username}'s Pokémon has returned to its normal size.`);
                     }
-                }, 60000); // 60 seconds                
+                }, 15000); // 60 seconds                
             }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
@@ -719,7 +752,7 @@ if (accessToken) {
 
                         setTimeout(() => {
                             messageElement.textContent = '';
-                            emoteElement.style.display = 'none';
+                            //emoteElement.style.display = 'none';
                         }, 5000); // Clear the message after 5 seconds
                     }
                 }
