@@ -5,6 +5,22 @@ const padding = 50; // Padding from the edges and between elements
 const velocities = [];
 const dynamaxState = []; // Tracks which Pokémon are Dynamaxxed
 
+function toProperCase(str) {
+    if (!str) return ''; // Handle empty or null input
+    
+    // Capitalize the first letter and concatenate the rest of the string
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function capitalizeAllWords(str) {
+    if (!str) return '';
+    
+    return str.toLowerCase().split(' ').map(word => {
+        // Use the previous function on each word
+        return toProperCase(word);
+    }).join(' ');
+}
+
 // Function to get URL parameters
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -478,10 +494,10 @@ function handleChannelPointRedemption(data) {
             pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
             cropTransparent(pokemonElement);
 
-            const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
+            const msg = `${username} rerolled their Pokémon to ${newPokemon.replace('-',' ')}`;
             console.log(msg);
             if (typeof client !== "undefined") {
-                client.say(channelName, msg); // Sends message to the channel
+                client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
             }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
@@ -513,10 +529,10 @@ function handleChannelPointRedemption(data) {
         
             cropTransparent(pokemonElement);
 
-            const msg = `${username} rerolled their Pokémon to ${shiny} ${newPokemon}`;
+            const msg = `${username} rerolled their Pokémon to ${shiny} ${newPokemon.replace('-',' ')}`;
             console.log(msg);
             if (typeof client !== "undefined") {
-                client.say(channelName, msg); // Sends message to the channel
+                client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
             }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
@@ -853,10 +869,11 @@ function checkUserPokemon(targetUsername) {
 
     const pokemonElement = document.getElementById(`pokemon${userIndex + 1}`);
     if (pokemonElement) {
-        const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '');
+        //const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '');
+        const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '').replace('/', ' ');
         console.log(`User ${targetUsername} has Pokémon: ${pokemonElement.src}`);
         if (typeof client !== "undefined") {
-            client.say(`#${username}`, `${targetUsername} has Pokémon: ${pokemonName}`);
+            client.say(`#${username}`, `${capitalizeAllWords(targetUsername)} has ${capitalizeAllWords(pokemonName)}`);
         }
     } else {
         console.log(`No Pokémon found for user ${targetUsername}.`);
@@ -865,6 +882,7 @@ function checkUserPokemon(targetUsername) {
         }
     }
 }
+
 
 
             // Listen to users joining the channel
