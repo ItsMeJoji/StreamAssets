@@ -724,6 +724,11 @@ if (accessToken) {
                         console.log('Invalid reset command. No username specified.');
                     }
                 }
+                // Check Specific User's Pokemon
+                if (message.trim() === '!check') {
+                    console.log('Check command received from ' + username);
+                    checkUserPokemon(username);
+                }
 
                 console.log('Badges:', badges);
                 if (isBroadcaster || isModerator || isSubscriber || isVip) {
@@ -835,7 +840,31 @@ function resetSpecificUser(targetUsername) {
     console.log(`Respawned Pokémon for user: ${targetUsername}`);
 }
 
+function checkUserPokemon(targetUsername) {
+    console.log(`Checking Pokémon for user: ${targetUsername}`);
 
+    // Find the index of the target user in the chatters array
+    const userIndex = chatters.findIndex(chatter => chatter.user_name === targetUsername);
+
+    if (userIndex === -1) {
+        console.log(`User ${targetUsername} not found.`);
+        return;
+    }
+
+    const pokemonElement = document.getElementById(`pokemon${userIndex + 1}`);
+    if (pokemonElement) {
+        const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '');
+        console.log(`User ${targetUsername} has Pokémon: ${pokemonElement.src}`);
+        if (typeof client !== "undefined") {
+            client.say(`#${username}`, `${targetUsername} has Pokémon: ${pokemonName}`);
+        }
+    } else {
+        console.log(`No Pokémon found for user ${targetUsername}.`);
+        if (typeof client !== "undefined") {
+            client.say(`#${username}`, `No Pokémon found for user ${targetUsername}.`);
+        }
+    }
+}
 
 
             // Listen to users joining the channel
