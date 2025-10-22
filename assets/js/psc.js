@@ -572,7 +572,7 @@ function handleChannelPointRedemption(data) {
 
                 dynamaxState[index] = true; // Mark this Pokémon as Dynamaxxed
 
-                const msg = `${username} Dynamaxed their Pokémon!`;
+                const msg = `${username} Dynamaxxed their Pokémon!`;
                 console.log(msg);
                 if (typeof client !== "undefined") {
                     client.say(channelName, msg); // Sends message to the channel
