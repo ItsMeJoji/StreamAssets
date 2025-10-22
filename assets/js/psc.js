@@ -500,13 +500,21 @@ function handleChannelPointRedemption(data) {
         if (index !== -1) {
             const newPokemon = getRandomPokemon();
             const pokemonElement = document.getElementById(`pokemon${index + 1}`);
-            pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
-            cropTransparent(pokemonElement);
+            if (pokemonElement) {
+                pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+                // set dataset before cropping which may change src to data: URL
+                pokemonElement.dataset.pokemon = newPokemon;
+                cropTransparent(pokemonElement);
 
-            const msg = `${username} rerolled their Pokémon to ${newPokemon.replace('-',' ')}`;
-            console.log(msg);
-            if (typeof client !== "undefined") {
-                client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
+                // Save to server/local
+                saveUserPokemonData(username, { pokemon: newPokemon, lastSeen: new Date().toISOString() })
+                    .catch(err => console.error('Save failed:', err));
+
+                const msg = `${username} rerolled their Pokémon to ${newPokemon.replace('-',' ')}`;
+                console.log(msg);
+                if (typeof client !== "undefined") {
+                    client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
+                }
             }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
@@ -529,19 +537,26 @@ function handleChannelPointRedemption(data) {
             }
             const randomNumber1 = getRandomNumber(MAX_RANGE);
             const randomNumber2 = getRandomNumber(MAX_RANGE);
-            if (randomNumber1 === randomNumber2) {
-                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
-                shiny = 'Shiny';
-            } else{
-                pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
-            }
-        
-            cropTransparent(pokemonElement);
+            if (pokemonElement) {
+                if (randomNumber1 === randomNumber2) {
+                    pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon}.png`;
+                    shiny = 'Shiny';
+                } else{
+                    pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+                }
 
-            const msg = `${username} rerolled their Pokémon to ${shiny} ${newPokemon.replace('-',' ')}`;
-            console.log(msg);
-            if (typeof client !== "undefined") {
-                client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
+                // set dataset and save
+                pokemonElement.dataset.pokemon = (shiny ? 'shiny-' : '') + newPokemon;
+                cropTransparent(pokemonElement);
+
+                saveUserPokemonData(username, { pokemon: pokemonElement.dataset.pokemon, lastSeen: new Date().toISOString() })
+                    .catch(err => console.error('Save failed:', err));
+
+                const msg = `${username} rerolled their Pokémon to ${shiny} ${newPokemon.replace('-',' ')}`;
+                console.log(msg);
+                if (typeof client !== "undefined") {
+                    client.say(channelName, capitalizeAllWords(msg)); // Sends message to the channel
+                }
             }
         } else {
             console.warn(`User ${username} is not currently in the chat.`);
@@ -611,38 +626,42 @@ function handleChannelPointRedemption(data) {
 
         const index = existingUsernames.findIndex((name) => name === username);
 
-        if (index !== -1){
-            const newPokemon = userInput
-            const pokemonElement = document.getElementById(`pokemon${index + 1}`);
-            
-            const MAX_RANGE = 3;
-            function getRandomNumber(max) {
-                return Math.floor(Math.random() * max) + 1;
-            }
-            const randomNumber1 = getRandomNumber(MAX_RANGE);
-            const randomNumber2 = getRandomNumber(MAX_RANGE);
-            if (newPokemon.endsWith('-s')){
-                pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon.replace('-s','')}.png`;
-            } else{
-                pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
-            }
-        
-            cropTransparent(pokemonElement);
+            if (index !== -1){
+                const newPokemon = userInput
+                const pokemonElement = document.getElementById(`pokemon${index + 1}`);
 
-            // Save the new Pokemon data
-            saveUserPokemonData(username, {
-                pokemon: newPokemon,
-                lastSeen: new Date().toISOString()
-            });
+                const MAX_RANGE = 3;
+                function getRandomNumber(max) {
+                    return Math.floor(Math.random() * max) + 1;
+                }
+                const randomNumber1 = getRandomNumber(MAX_RANGE);
+                const randomNumber2 = getRandomNumber(MAX_RANGE);
+                if (pokemonElement) {
+                    if (newPokemon.endsWith('-s')){
+                        pokemonElement.src = `assets/images/Pokemon/shiny/${newPokemon.replace('-s','')}.png`;
+                        pokemonElement.dataset.pokemon = newPokemon;
+                    } else{
+                        pokemonElement.src = `assets/images/Pokemon/${newPokemon}.png`;
+                        pokemonElement.dataset.pokemon = newPokemon;
+                    }
 
-            const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
-            console.log(msg);
-            if (typeof client !== "undefined") {
-                client.say(channelName, msg); // Sends message to the channel
+                    cropTransparent(pokemonElement);
+
+                    // Save the new Pokemon data
+                    saveUserPokemonData(username, {
+                        pokemon: pokemonElement.dataset.pokemon,
+                        lastSeen: new Date().toISOString()
+                    }).catch(err => console.error('Save failed:', err));
+
+                    const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
+                    console.log(msg);
+                    if (typeof client !== "undefined") {
+                        client.say(channelName, msg); // Sends message to the channel
+                    }
+                }
+            } else {
+                console.warn(`User ${username} is not currently in the chat.`);
             }
-        } else {
-            console.warn(`User ${username} is not currently in the chat.`);
-        }
     }
     else {
         console.warn(`Unhandled redemption: ${redemption.reward.title}`);
@@ -838,25 +857,32 @@ if (accessToken) {
                     // Display the message above the corresponding Pokémon
                     const usernameIndex = chatters.findIndex(chatter => chatter.user_name === tags.username);
                     if (usernameIndex !== -1) {
-                        const messageElement = document.getElementById(`message${usernameIndex + 1}`);
-                        const emoteElement = document.getElementById(`emote${usernameIndex + 1}`);
-                        
-                        // parts.forEach((part, index) =>{
-                        //         if (part.type === "text"){
-                        //             messageElement.textContent = part.content;
-                        //             emoteElement.style.display = 'inline-block';
-                        //         } else if (part.type === "emote"){
-                        //             emoteElement.src = part.content;
-                        //             emoteElement.style.display = 'inline-block';
-                        //         }
-                        // });
+                        // Try to display the message, but avoid creating full user elements here.
+                        // Use a small retry loop because element creation can race with message events.
+                        const tryDisplay = (attemptsLeft) => {
+                            const messageElement = document.getElementById(`message${usernameIndex + 1}`);
+                            const emoteElement = document.getElementById(`emote${usernameIndex + 1}`);
 
-                        messageElement.textContent = message;
+                            if (messageElement) {
+                                messageElement.textContent = message;
+                                // Optionally handle emote display here if parts were parsed
 
-                        setTimeout(() => {
-                            messageElement.textContent = '';
-                            //emoteElement.style.display = 'none';
-                        }, 5000); // Clear the message after 5 seconds
+                                setTimeout(() => {
+                                    messageElement.textContent = '';
+                                }, 5000);
+                                return;
+                            }
+
+                            if (attemptsLeft > 0) {
+                                // wait a short time for the elements to be created elsewhere
+                                setTimeout(() => tryDisplay(attemptsLeft - 1), 100);
+                            } else {
+                                // Give up — element never appeared. Do not create elements here to avoid duplicates.
+                                console.warn(`Message element for ${tags.username} not found after retries.`);
+                            }
+                        };
+
+                        tryDisplay(8); // try for ~800ms total
                     }
                 }
 
@@ -938,7 +964,7 @@ function resetSpecificUser(targetUsername) {
     console.log(`Respawned Pokémon for user: ${targetUsername}`);
 }
 
-function checkUserPokemon(targetUsername) {
+async function checkUserPokemon(targetUsername) {
     console.log(`Checking Pokémon for user: ${targetUsername}`);
 
     // Find the index of the target user in the chatters array
@@ -950,12 +976,58 @@ function checkUserPokemon(targetUsername) {
     }
 
     const pokemonElement = document.getElementById(`pokemon${userIndex + 1}`);
-    if (pokemonElement) {
-        //const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '');
-        const pokemonName = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '').replace('/', ' ');
-        console.log(`User ${targetUsername} has Pokémon: ${pokemonElement.src}`);
+    let reportedPokemon = null;
+
+    if (pokemonElement && pokemonElement.dataset && pokemonElement.dataset.pokemon) {
+        reportedPokemon = pokemonElement.dataset.pokemon;
+    }
+
+    // If we don't have it on the element, try server/local storage
+    if (!reportedPokemon) {
+        try {
+            const stored = await loadUserPokemonData(targetUsername);
+            if (stored && stored.pokemon) reportedPokemon = stored.pokemon;
+        } catch (e) {
+            console.error('Error loading stored data for check:', e);
+        }
+    }
+
+    // Fallback to parsing the src (last resort)
+    if (!reportedPokemon && pokemonElement) {
+        try {
+            reportedPokemon = pokemonElement.src.split('/Pokemon/').pop().replace('.png', '').replace('/', ' ');
+        } catch (e) {
+            reportedPokemon = pokemonElement.src;
+        }
+    }
+
+    if (reportedPokemon) {
+        // Normalize shiny markers: '-s' suffix or 'shiny-' prefix
+        let isShiny = false;
+        let name = reportedPokemon;
+
+        if (typeof name === 'string') {
+            if (name.endsWith('-s')) {
+                isShiny = true;
+                name = name.slice(0, -2);
+            }
+            if (name.startsWith('shiny-')) {
+                isShiny = true;
+                name = name.slice(6);
+            }
+            // Also handle names saved as 'shinyPikachu' or similar unlikely forms by checking 'shiny' prefix
+            if (!isShiny && name.toLowerCase().startsWith('shiny')) {
+                // remove leading 'shiny' and any non-letter separators
+                isShiny = true;
+                name = name.replace(/^shiny[-_\s]*/i, '');
+            }
+        }
+
+        const displayName = `${isShiny ? 'Shiny ' : ''}${capitalizeAllWords(String(name).replace(/-/g, ' ').replace(/_/g, ' '))}`;
+
+        console.log(`${targetUsername} is ${displayName}`);
         if (typeof client !== "undefined") {
-            client.say(`#${username}`, `${capitalizeAllWords(targetUsername)} has ${capitalizeAllWords(pokemonName)}`);
+            client.say(`#${username}`, `${capitalizeAllWords(targetUsername)} has ${displayName}`);
         }
     } else {
         console.log(`No Pokémon found for user ${targetUsername}.`);
