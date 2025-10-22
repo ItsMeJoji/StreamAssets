@@ -182,6 +182,8 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         saveUserPokemonData(chatter.user_name, {
             pokemon: imageName,
             lastSeen: new Date().toISOString()
+        }).catch(error => {
+            console.error('Error saving Pokemon data:', error);
         });
 
         // Initialize positions at the top left corner
@@ -779,19 +781,24 @@ if (accessToken) {
                 if (!existingUsernames.includes(username)) {
                     existingUsernames.push(username);
                     // Check if user has stored Pokemon data
-                    const storedData = loadUserPokemonData(username);
-                    if (storedData && storedData.pokemon) {
-                        console.log(`Loading stored Pokemon for ${username}: ${storedData.pokemon}`);
-                        // Add the user with their stored Pokemon
-                        addNewPokemonAndUsernames({ 
-                            user_name: username,
-                            storedPokemon: storedData.pokemon 
-                        }, chatters.length - 1);
-                    } else {
-                        // Add new user with random Pokemon
+                    loadUserPokemonData(username).then(storedData => {
+                        if (storedData && storedData.pokemon) {
+                            console.log(`Loading stored Pokemon for ${username}: ${storedData.pokemon}`);
+                            // Add the user with their stored Pokemon
+                            addNewPokemonAndUsernames({ 
+                                user_name: username,
+                                storedPokemon: storedData.pokemon 
+                            }, chatters.length - 1);
+                        } else {
+                            // Add new user with random Pokemon
+                            addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
+                        }
+                        console.log('New User Added:' + username);
+                    }).catch(error => {
+                        console.error('Error loading stored Pokemon:', error);
+                        // Fallback to random Pokemon on error
                         addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
-                    }
-                    console.log('New User Added:' + username);
+                    });
                 }
 
                 // Listen for a specific command from "ItsMeJoji"
