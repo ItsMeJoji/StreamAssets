@@ -65,8 +65,8 @@ function retrieveAccessToken() {
 
 const urlParams = retrieveUrlParameters();
 const clientId = urlParams.client_id || getUrlParameter('client_id');
-const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
-//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
+//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
 const username = urlParams.username || getUrlParameter('username');
 const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
 const youtubeAPI = urlParams.youtube_api || getUrlParameter('youtube_api');
@@ -101,9 +101,10 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
         'katfreak101': 'liepard-s'
     }
     console.log('Adding new Pokémon for ' + chatter.user_name);
-    function addPokemon() {
 
-        let imageName = getRandomPokemon();
+    function addPokemon() {
+        // Use storedPokemon if provided, otherwise get a random one
+        let imageName = chatter.storedPokemon || getRandomPokemon();
         if (specialUsers[chatter.user_name]) {
             imageName = specialUsers[chatter.user_name]; // Use special Pokémon for certain users
         }
@@ -176,6 +177,12 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
             imgElement.src = imagePath;
             cropTransparent(imgElement);
         }
+
+        // Save the Pokemon data
+        saveUserPokemonData(chatter.user_name, {
+            pokemon: imageName,
+            lastSeen: new Date().toISOString()
+        });
 
         // Initialize positions at the top left corner
         const posX = padding;
@@ -620,6 +627,12 @@ function handleChannelPointRedemption(data) {
         
             cropTransparent(pokemonElement);
 
+            // Save the new Pokemon data
+            saveUserPokemonData(username, {
+                pokemon: newPokemon,
+                lastSeen: new Date().toISOString()
+            });
+
             const msg = `${username} rerolled their Pokémon to ${newPokemon}`;
             console.log(msg);
             if (typeof client !== "undefined") {
@@ -673,6 +686,56 @@ function formatMessage(tags, message){
 }
 
 
+// Function to save user Pokemon data
+async function saveUserPokemonData(username, pokemonData) {
+    try {
+        const response = await fetch(`/api/pokemon/${encodeURIComponent(username)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pokemonData)
+        });
+        if (!response.ok) throw new Error('Failed to save');
+        return true;
+    } catch (error) {
+        console.error('Failed to save Pokemon data:', error);
+        // Fallback to localStorage if server fails
+        const storedData = JSON.parse(localStorage.getItem('userPokemonData') || '{}');
+        storedData[username] = pokemonData;
+        localStorage.setItem('userPokemonData', JSON.stringify(storedData));
+        return false;
+    }
+}
+
+// Function to load user Pokemon data
+async function loadUserPokemonData(username) {
+    try {
+        const response = await fetch(`/api/pokemon/${encodeURIComponent(username)}`);
+        if (!response.ok) throw new Error('Failed to load');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Failed to load Pokemon data:', error);
+        // Fallback to localStorage if server fails
+        const storedData = JSON.parse(localStorage.getItem('userPokemonData') || '{}');
+        return storedData[username];
+    }
+}
+
+// Function to load all stored users and their Pokemon
+async function loadAllStoredUserData() {
+    try {
+        const response = await fetch('/api/pokemon');
+        if (!response.ok) throw new Error('Failed to load');
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to load all Pokemon data:', error);
+        // Fallback to localStorage if server fails
+        return JSON.parse(localStorage.getItem('userPokemonData') || '{}');
+    }
+}
+
 const existingUsernames = [];
 const accessToken = getAccessTokenFromUrl() || retrieveAccessToken();
 if (accessToken) {
@@ -714,10 +777,22 @@ if (accessToken) {
 
                 const username = tags.username;
                 if (!existingUsernames.includes(username)) {
-                        existingUsernames.push(username);
+                    existingUsernames.push(username);
+                    // Check if user has stored Pokemon data
+                    const storedData = loadUserPokemonData(username);
+                    if (storedData && storedData.pokemon) {
+                        console.log(`Loading stored Pokemon for ${username}: ${storedData.pokemon}`);
+                        // Add the user with their stored Pokemon
+                        addNewPokemonAndUsernames({ 
+                            user_name: username,
+                            storedPokemon: storedData.pokemon 
+                        }, chatters.length - 1);
+                    } else {
+                        // Add new user with random Pokemon
                         addNewPokemonAndUsernames({ user_name: username }, chatters.length - 1);
-                        console.log('New User Added:' + username);
                     }
+                    console.log('New User Added:' + username);
+                }
 
                 // Listen for a specific command from "ItsMeJoji"
                 
