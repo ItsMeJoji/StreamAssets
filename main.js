@@ -1,36 +1,3 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-
-function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    },
-    transparent: true,
-    frame: false
-  });
-
-  win.loadFile('parasocial-checker.html');
-  
-  // Uncomment the following line to open DevTools by default
-  // win.webContents.openDevTools();
-}
-
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+// main.js (Electron) is deprecated in this repository.
+// The project now uses Flask (`app.py`) for serving overlays and persisting data.
+// If you need Electron later, restore or replace this file.
