@@ -65,8 +65,8 @@ function retrieveAccessToken() {
 
 const urlParams = retrieveUrlParameters();
 const clientId = urlParams.client_id || getUrlParameter('client_id');
-const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://127.0.0.1:3000';
-//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
+//const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://127.0.0.1:3000';
+const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'https://itsmejoji.github.io/StreamAssets/parasocial-checker.html';
 //const redirectUri = urlParams.redirect_uri || getUrlParameter('redirect_uri') || 'http://localhost:3000/parasocial-checker.html'; //For Development
 const username = urlParams.username || getUrlParameter('username');
 const moderatorUsername = urlParams.moderator_username || getUrlParameter('moderator_username') || username;
@@ -93,7 +93,8 @@ function addNewPokemonAndUsernames(chatter, previousIndex) {
 
     const specialUsers = {
         'itsmejoji': 'blastoise-s',
-        'nightbot': 'porygon-s',
+        'nightbot': 'porygon-z',
+        'porygon_bot_': 'porygon-s',
         'thomkeeris': 'sableye',
         'sirtoastyt': 'scizor-s',
         'cherrius_': 'deoxys',

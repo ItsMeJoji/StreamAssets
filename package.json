@@ -1,5 +1,0 @@
-{
-  "deprecated": true,
-  "message": "This project now uses Flask (app.py) for serving. Node package.json retained as a placeholder.",
-  "remove_if_not_needed": true
-}
