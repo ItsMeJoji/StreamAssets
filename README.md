@@ -1,4 +1,4 @@
 # StreamAssets
 
-Collection of small overlay tools used by ItsMeJoji for livestreams (Pokémon-themed overlays, parasocial/friendship checkers, and utilities).
+Collection of small stream tools used by ItsMeJoji for livestreams (Pokémon-themed overlay, docket page, and utilities).
 

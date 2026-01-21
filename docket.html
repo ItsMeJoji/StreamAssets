@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Docket</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+</head>
+<body style="padding: 20px;">
+    <h1>Stream Docket</h1>
+    <div id="docket-container" style="border: 1px solid;">Loading schedule...</div>
+
+    <script>
+        // REPLACE THE URL BELOW with your "Published to Web" CSV link
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT8OBGqnDQoznslLTWZyBcysxWijxoTHZMUhVCySH1FlbGNRxW_0z00R5o2GBMUSq-LxoWv_GTKe6g7/pub?gid=0&single=true&output=csv';
+
+        async function loadDocket() {
+            try {
+                const response = await fetch(csvUrl);
+                const data = await response.text();
+                const rows = data.split('\n').slice(1); // Skip the header row
+                
+                let html = '<table><tr><th><u>Item</u></th><th><u>Game</u></th><th><u>Description</u></th></tr>';
+                
+                rows.forEach(row => {
+                    const columns = row.split(',');
+                    if (columns.length >= 3) {
+                        html += `<tr>
+                            <td>${columns[0]}</td>
+                            <td>${columns[1]}</td>
+                            <td>${columns[2]}</td>
+                        </tr>`;
+                    }
+                });
+                
+                html += '</table>';
+                document.getElementById('docket-container').innerHTML = html;
+            } catch (error) {
+                document.getElementById('docket-container').innerHTML = "Failed to load docket.";
+            }
+        }
+
+        loadDocket();
+        // Refresh every 60 seconds automatically
+        setInterval(loadDocket, 20000);
+    </script>
+</body>
+</html>
