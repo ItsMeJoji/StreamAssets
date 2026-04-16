@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stream Schedule</title>
+    <style>
+        :root {
+            --bg: #0a0618;
+            --panel: rgba(9, 8, 28, 0.72);
+            --line: rgba(255, 255, 255, 0.1);
+            --text: #f5f7ff;
+            --muted: rgba(245, 247, 255, 0.72);
+            --accent: #b993ff;
+            --accent2: #66d9ff;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; margin: 0; }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(185, 147, 255, 0.28), transparent 24%),
+                radial-gradient(circle at top right, rgba(102, 217, 255, 0.18), transparent 22%),
+                linear-gradient(180deg, #1d1842 0%, #120b33 36%, #070515 100%);
+        }
+
+        .shell {
+            width: min(1120px, calc(100vw - 24px));
+            margin: 12px auto;
+            padding: 18px;
+            border-radius: 28px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+            backdrop-filter: blur(18px);
+        }
+
+        .hero {
+            display: grid;
+            gap: 18px;
+            padding: 22px;
+            border-radius: 24px;
+            background: linear-gradient(160deg, rgba(165, 142, 236, 0.9), rgba(58, 55, 182, 0.92) 45%, rgba(11, 7, 63, 0.95));
+            overflow: hidden;
+            justify-items: center;
+            text-align: center;
+        }
+
+        .eyebrow {
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.86);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2.25rem, 3.6vw, 4.2rem);
+            line-height: 0.84;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            font-weight: 900;
+            font-family: "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif;
+            text-shadow: 0 6px 0 rgba(36, 22, 90, 0.28);
+        }
+
+        .hero-copy {
+            margin: 0;
+            max-width: 60ch;
+            color: rgba(255,255,255,0.86);
+            font-size: 0.98rem;
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        .controls {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(9, 8, 28, 0.52);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .field input {
+            width: 100%;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+            font: inherit;
+        }
+
+        .field input:focus {
+            outline: 2px solid rgba(185, 147, 255, 0.8);
+            outline-offset: 2px;
+        }
+
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.84);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .actions .btn {
+            white-space: nowrap;
+        }
+
+        .toggle-group {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .toggle-group .btn {
+            padding: 10px 12px;
+        }
+
+        .toggle-group .btn.active {
+            background: linear-gradient(135deg, rgba(185,147,255,1), rgba(102,217,255,0.95));
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: white;
+            background: linear-gradient(135deg, rgba(185,147,255,0.96), rgba(102,217,255,0.92));
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn.secondary {
+            background: rgba(255,255,255,0.11);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .board-wrap {
+            margin-top: 18px;
+            width: min(330px, calc(100vw - 24px));
+            margin-left: auto;
+            margin-right: auto;
+            padding: 16px 14px 18px;
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.14), transparent 35%),
+                linear-gradient(180deg, rgba(169, 165, 224, 0.95) 0%, rgba(126, 113, 200, 0.96) 16%, rgba(76, 59, 175, 0.98) 56%, rgba(18, 0, 161, 1) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 26px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        body.layout-horizontal .board-wrap {
+            width: min(1120px, calc(100vw - 24px));
+        }
+
+        .board-head {
+            position: relative;
+            display: grid;
+            place-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-top: 12px;
+            min-height: 102px;
+        }
+
+        .board-title {
+            display: grid;
+            gap: 0;
+            justify-items: center;
+        }
+
+        .board-title strong {
+            display: grid;
+            gap: 0;
+            justify-items: center;
+            font-size: clamp(2.2rem, 8vw, 2.7rem);
+            line-height: 0.84;
+            letter-spacing: -0.06em;
+            text-transform: uppercase;
+            font-weight: 900;
+            font-family: "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif;
+            text-align: center;
+            text-shadow: 0 4px 0 rgba(42, 25, 98, 0.36), 0 8px 22px rgba(0, 0, 0, 0.18);
+            margin-top: 14px;
+            white-space: nowrap;
+        }
+
+        .board-title strong span {
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .board-title span {
+            display: none;
+        }
+
+        .week-label {
+            position: absolute;
+            top: 4px;
+            right: 0;
+            padding: 4px 7px;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #5847aa;
+            font-weight: 900;
+            font-size: 0.66rem;
+            letter-spacing: 0.04em;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        body.layout-horizontal .days {
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+        }
+
+        .day {
+            min-height: 62px;
+            padding: 10px 12px 11px;
+            border-radius: 13px;
+            background: linear-gradient(90deg, rgba(170, 119, 187, 0.72), rgba(72, 62, 193, 0.78));
+            border: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        body.layout-horizontal .day {
+            min-height: 260px;
+        }
+
+        .day-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            text-transform: uppercase;
+        }
+
+        .day-head strong {
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            color: rgba(243, 240, 255, 0.48);
+        }
+
+        .day-head span {
+            display: none;
+        }
+
+        body.layout-horizontal .day-head span {
+            display: inline;
+            color: rgba(255,255,255,0.56);
+            font-size: 0.72rem;
+        }
+
+        .day-empty {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            min-height: 40px;
+            border-radius: 12px;
+            background:
+                radial-gradient(circle at 50% 18%, rgba(255,255,255,0.12), transparent 38%),
+                linear-gradient(180deg, rgba(122, 76, 194, 0.34), rgba(22, 17, 118, 0.25));
+            color: rgba(239, 236, 255, 0.88);
+            font-weight: 900;
+            font-size: 1.15rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            text-align: center;
+            text-shadow: 0 4px 0 rgba(38, 25, 100, 0.35);
+        }
+
+        body.layout-horizontal .day-empty {
+            min-height: 174px;
+            font-size: 1.1rem;
+        }
+
+        .segment {
+            position: relative;
+            min-height: 70px;
+            padding: 10px 10px 10px 12px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(135deg, rgba(16, 18, 54, 0.45), rgba(10, 12, 34, 0.92));
+        }
+
+        body.layout-horizontal .segment {
+            min-height: 112px;
+            padding: 12px;
+        }
+
+        .segment-art {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: saturate(1.1) brightness(0.68);
+            transform: scale(1.06);
+            opacity: 0.58;
+        }
+
+        .segment-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 68px 1fr;
+            grid-template-areas:
+                "time title"
+                "weekday title";
+            column-gap: 10px;
+            row-gap: 2px;
+            align-items: center;
+        }
+
+        body.layout-horizontal .segment-content {
+            grid-template-columns: 1fr;
+            grid-template-areas:
+                "time"
+                "weekday"
+                "title";
+            align-items: start;
+        }
+
+        .segment-time {
+            grid-area: time;
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+            color: rgba(255,255,255,0.96);
+            text-shadow: 0 2px 6px rgba(0,0,0,0.55);
+        }
+
+        .segment-weekday {
+            grid-area: weekday;
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            color: rgba(255,255,255,0.94);
+            text-shadow: 0 2px 6px rgba(0,0,0,0.55);
+        }
+
+        body.layout-horizontal .segment-weekday {
+            font-size: 0.64rem;
+        }
+
+        .segment-title {
+            grid-area: title;
+            font-size: 0.9rem;
+            line-height: 1.12;
+            font-weight: 800;
+            color: rgba(255,255,255,0.98);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        body.layout-horizontal .segment-title {
+            font-size: 1rem;
+            line-height: 1.15;
+        }
+
+        .segment-meta {
+            display: none;
+        }
+
+        .pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        .message {
+            margin-top: 12px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.92rem;
+        }
+
+        .message.error {
+            color: #ffb8c5;
+        }
+
+        .message.success {
+            color: #adffcf;
+        }
+
+        @media print {
+            body.print-vertical,
+            body.print-horizontal {
+                color: var(--text);
+                background:
+                    radial-gradient(circle at top left, rgba(185, 147, 255, 0.28), transparent 24%),
+                    radial-gradient(circle at top right, rgba(102, 217, 255, 0.18), transparent 22%),
+                    linear-gradient(180deg, #1d1842 0%, #120b33 36%, #070515 100%);
+            }
+
+            body.print-vertical .shell,
+            body.print-horizontal .shell {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                backdrop-filter: none;
+            }
+
+            body.print-vertical .hero,
+            body.print-horizontal .hero,
+            body.print-vertical .controls,
+            body.print-horizontal .controls,
+            body.print-vertical .status-row,
+            body.print-horizontal .status-row,
+            body.print-vertical .actions,
+            body.print-horizontal .actions,
+            body.print-vertical .message,
+            body.print-horizontal .message {
+                display: none;
+            }
+
+            body.print-vertical .board-wrap,
+            body.print-horizontal .board-wrap {
+                margin-top: 0;
+                box-shadow: none;
+            }
+
+            body.print-vertical .board-wrap {
+                width: min(330px, calc(100vw - 24px));
+            }
+
+            body.print-horizontal .board-wrap {
+                width: 100%;
+                max-width: none;
+            }
+
+            body.print-vertical .days {
+                grid-template-columns: 1fr !important;
+            }
+
+            body.print-horizontal .days {
+                grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+            }
+
+            body.print-vertical .day,
+            body.print-horizontal .day {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .controls-grid { grid-template-columns: 1fr; }
+            .board-wrap { width: min(330px, calc(100vw - 24px)); }
+            .days { grid-template-columns: 1fr; }
+            body.layout-horizontal .days { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 700px) {
+            .shell { width: min(100vw - 12px, 1200px); margin: 6px auto; padding: 10px; border-radius: 20px; }
+            .hero { padding: 18px; }
+            .controls { padding: 14px; }
+            .status-row { justify-content: center; }
+            .days { grid-template-columns: 1fr; }
+            .day { min-height: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <section class="hero">
+            <div class="eyebrow">Twitch stream schedule</div>
+            <h1>Stream Schedule</h1>
+            <p class="hero-copy">
+                Pull a broadcaster's weekly schedule directly from Twitch, move week by week, and render each day as a card.
+                Use a Twitch user access token for schedule access, then enter the broadcaster login or numeric ID you want to render.
+            </p>
+
+            <div class="controls">
+                <div class="controls-grid">
+                    <div class="field">
+                        <label for="broadcasterInput">Broadcaster Login / ID</label>
+                        <input id="broadcasterInput" type="text" placeholder="itsmejoji or 141981764" />
+                    </div>
+                    <div class="field">
+                        <label for="timezoneInput">Display Time Zone</label>
+                        <input id="timezoneInput" type="text" placeholder="America/Los_Angeles" />
+                    </div>
+                </div>
+
+                <div class="status-row">
+                    <div class="chips">
+                        <span class="chip" id="clientChip">Client missing</span>
+                        <span class="chip" id="tokenChip">Not connected</span>
+                        <span class="chip" id="broadcasterChip">Broadcaster not loaded</span>
+                        <span class="chip" id="timezoneChip">Time zone pending</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn secondary" id="prevWeekBtn" type="button">Previous Week</button>
+                        <button class="btn secondary" id="thisWeekBtn" type="button">This Week</button>
+                        <button class="btn secondary" id="nextWeekBtn" type="button">Next Week</button>
+                        <button class="btn secondary" id="connectBtn" type="button">Connect Twitch</button>
+                        <button class="btn" id="loadBtn" type="button">Load Schedule</button>
+                        <div class="toggle-group" role="group" aria-label="Schedule layout">
+                            <button class="btn secondary" id="verticalLayoutBtn" type="button">Vertical</button>
+                            <button class="btn secondary" id="horizontalLayoutBtn" type="button">Horizontal</button>
+                        </div>
+                        <button class="btn secondary" id="exportPngBtn" type="button">Print PNG</button>
+                    </div>
+                </div>
+
+                <div class="message" id="message">Connect with Twitch, then load a broadcaster to render the week.</div>
+            </div>
+        </section>
+
+        <section class="board-wrap">
+            <div class="board-head">
+                <div class="board-title">
+                    <strong id="boardTitle"><span>Stream</span><span>Schedule</span></strong>
+                    <span id="boardSubtitle">Pick a broadcaster and load a week.</span>
+                </div>
+                <span class="week-label" id="weekLabel">Week label</span>
+            </div>
+            <div class="days" id="days"></div>
+        </section>
+    </div>
+
+    <script type="module" src="assets/js/schedule-maker.js"></script>
+</body>
+</html>

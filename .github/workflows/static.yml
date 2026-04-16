@@ -28,16 +28,32 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      VITE_TWITCH_CLIENT_ID: ${{ vars.VITE_TWITCH_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify Twitch client ID
+        run: |
+          if [ -z "$VITE_TWITCH_CLIENT_ID" ]; then
+            echo "VITE_TWITCH_CLIENT_ID is missing. Set it as a repository variable before deploying."
+            exit 1
+          fi
+      - name: Build site
+        run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: './dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
