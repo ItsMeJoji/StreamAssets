@@ -11,16 +11,18 @@ function getHtmlInputs() {
   );
 }
 
-function copyLegacyScripts() {
-  const sourceDir = path.resolve(__dirname, 'assets', 'js');
-  const targetDir = path.resolve(__dirname, 'dist', 'assets', 'js');
+function copyStaticAssets() {
+  const assetsToCopy = ['js', 'images', 'dat'];
+  
+  assetsToCopy.forEach(folder => {
+    const sourceDir = path.resolve(__dirname, 'assets', folder);
+    const targetDir = path.resolve(__dirname, 'dist', 'assets', folder);
 
-  if (!fs.existsSync(sourceDir)) {
-    return;
-  }
-
-  fs.mkdirSync(targetDir, { recursive: true });
-  fs.cpSync(sourceDir, targetDir, { recursive: true });
+    if (fs.existsSync(sourceDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+      fs.cpSync(sourceDir, targetDir, { recursive: true });
+    }
+  });
 }
 
 module.exports = {
@@ -34,9 +36,9 @@ module.exports = {
   },
   plugins: [
     {
-      name: 'copy-legacy-scripts',
+      name: 'copy-static-assets',
       closeBundle() {
-        copyLegacyScripts();
+        copyStaticAssets();
       }
     }
   ]
