@@ -15,20 +15,14 @@ const state = {
 };
 
 const els = {
-    clientChip: document.getElementById('clientChip'),
     broadcasterInput: document.getElementById('broadcasterInput'),
     timezoneInput: document.getElementById('timezoneInput'),
-    tokenChip: document.getElementById('tokenChip'),
-    broadcasterChip: document.getElementById('broadcasterChip'),
-    timezoneChip: document.getElementById('timezoneChip'),
+    weekOffsetSelect: document.getElementById('weekOffsetSelect'),
     message: document.getElementById('message'),
     boardTitle: document.getElementById('boardTitle'),
     boardSubtitle: document.getElementById('boardSubtitle'),
     weekLabel: document.getElementById('weekLabel'),
     days: document.getElementById('days'),
-    prevWeekBtn: document.getElementById('prevWeekBtn'),
-    thisWeekBtn: document.getElementById('thisWeekBtn'),
-    nextWeekBtn: document.getElementById('nextWeekBtn'),
     connectBtn: document.getElementById('connectBtn'),
     loadBtn: document.getElementById('loadBtn'),
     verticalLayoutBtn: document.getElementById('verticalLayoutBtn'),
@@ -37,6 +31,21 @@ const els = {
 };
 
 const BOARD_TITLE_HTML = '<span>Stream</span><span>Schedule</span>';
+const WEEK_OPTIONS = [-1, 0, 1];
+const TIME_ZONE_OPTIONS = [
+    'America/Los_Angeles',
+    'America/Denver',
+    'America/Chicago',
+    'America/New_York',
+    'America/Phoenix',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+    'UTC',
+    'Europe/London',
+    'Europe/Paris',
+    'Asia/Tokyo',
+    'Australia/Sydney'
+];
 
 function saveState() {
     localStorage.setItem('schedule_maker_access_token', state.accessToken);
@@ -55,22 +64,19 @@ function setMessage(text, tone = '') {
 
 function syncInputs() {
     els.broadcasterInput.value = state.broadcasterInput;
+    populateTimezoneOptions(state.timezone);
     els.timezoneInput.value = state.timezone;
-    updateChips();
+    const weekValue = WEEK_OPTIONS.includes(state.weekOffset) ? state.weekOffset : 0;
+    state.weekOffset = weekValue;
+    els.weekOffsetSelect.value = String(weekValue);
     updateLayoutButtons();
 }
 
-function updateChips() {
-    els.clientChip.textContent = state.clientId
-        ? 'Client loaded'
-        : 'Client missing';
-    els.tokenChip.textContent = state.accessToken
-        ? `Connected as ${state.tokenLogin || 'Twitch user'}`
-        : 'Not connected';
-    els.broadcasterChip.textContent = state.broadcasterInput
-        ? `Target: ${state.broadcasterInput}`
-        : 'Broadcaster not loaded';
-    els.timezoneChip.textContent = `TZ: ${state.timezone}`;
+function populateTimezoneOptions(selectedZone = state.timezone) {
+    const zones = [...new Set([selectedZone, ...TIME_ZONE_OPTIONS].filter(Boolean))];
+    els.timezoneInput.innerHTML = zones
+        .map((zone) => `<option value="${escapeHtml(zone)}">${escapeHtml(zone)}</option>`)
+        .join('');
 }
 
 function updateLayoutButtons() {
@@ -90,7 +96,16 @@ function setLayout(layout) {
     saveState();
     updateLayoutButtons();
     if (state.currentBoard) {
-        renderBoard(state.currentBoard.segments, state.currentBoard.weekStart, state.currentBoard.timeZone, state.currentBoard.info);
+        renderBoard(
+            state.currentBoard.segments,
+            state.currentBoard.weekStart,
+            state.currentBoard.timeZone,
+            state.currentBoard.info,
+            {
+                broadcasterId: state.currentBoard.broadcasterId,
+                channelEmotes: state.currentBoard.channelEmotes
+            }
+        );
     }
 }
 
@@ -253,10 +268,60 @@ function loadImage(url) {
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.crossOrigin = 'anonymous';
-        image.onload = () => resolve(image);
-        image.onerror = reject;
+        image.onload = () => {
+            console.log('✓ Image loaded:', url);
+            resolve(image);
+        };
+        image.onerror = () => {
+            console.error('✗ Image failed to load:', url);
+            reject(new Error(`Failed to load image: ${url}`));
+        };
         image.src = url;
     });
+}
+
+function buildEmoteImageUrl(template, emote) {
+    if (!template) {
+        return emote.images?.url_4x || emote.images?.url_2x || emote.images?.url_1x || '';
+    }
+
+    const format = emote.format?.includes('static') ? 'static' : emote.format?.[0] || 'static';
+    const themeMode = emote.theme_mode?.includes('dark')
+        ? 'dark'
+        : emote.theme_mode?.includes('light')
+            ? 'light'
+            : 'dark';
+    const scale = emote.scale?.includes('3.0')
+        ? '3.0'
+        : emote.scale?.includes('2.0')
+            ? '2.0'
+            : emote.scale?.includes('1.0')
+                ? '1.0'
+                : '2.0';
+
+    return template
+        .replaceAll('{{id}}', emote.id)
+        .replaceAll('{{format}}', format)
+        .replaceAll('{{theme_mode}}', themeMode)
+        .replaceAll('{{scale}}', scale);
+}
+
+function pickRandomItem(items, excludeId = '') {
+    const pool = items.filter((item) => item.id !== excludeId);
+    const source = pool.length ? pool : items;
+    if (!source.length) return null;
+    return source[Math.floor(Math.random() * source.length)];
+}
+
+function getStaticChannelEmotes(payload) {
+    const template = payload?.template || '';
+    return (payload?.data || [])
+        .filter((emote) => Array.isArray(emote.format) && emote.format.includes('static'))
+        .map((emote) => ({
+            ...emote,
+            imageUrl: buildEmoteImageUrl(template, emote)
+        }))
+        .filter((emote) => Boolean(emote.imageUrl));
 }
 
 function roundRect(ctx, x, y, width, height, radius) {
@@ -289,6 +354,27 @@ function drawCoverImage(ctx, image, x, y, width, height) {
     }
 
     ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+}
+
+function drawContainImage(ctx, image, x, y, width, height) {
+    if (!image) return;
+
+    const sourceAspect = image.width / image.height;
+    const targetAspect = width / height;
+    let drawWidth = width;
+    let drawHeight = height;
+    let drawX = x;
+    let drawY = y;
+
+    if (sourceAspect > targetAspect) {
+        drawHeight = width / sourceAspect;
+        drawY = y + ((height - drawHeight) / 2);
+    } else {
+        drawWidth = height * sourceAspect;
+        drawX = x + ((width - drawWidth) / 2);
+    }
+
+    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 }
 
 function createMeasureContext() {
@@ -350,6 +436,33 @@ function prepareBoardLayout(board, layout) {
     const ctx = createMeasureContext();
     ctx.font = '800 14px Inter, system-ui, sans-serif';
 
+    if (layout === 'horizontal') {
+        const cellWidth = (metrics.boardWidth - (metrics.boardPadding * 2) - (3 * metrics.dayGap)) / 4;
+        const dayLayouts = board.dayGroups.map((daySegments) => {
+            const segmentLayouts = daySegments.map((segment) => {
+                ctx.font = `800 ${metrics.titleSize}px Inter, system-ui, sans-serif`;
+                return {
+                    segment,
+                    ...getSegmentRenderPlan(ctx, segment, layout, metrics, cellWidth)
+                };
+            });
+
+            const dayHeight = daySegments.length
+                ? segmentLayouts.reduce((sum, item) => sum + item.segmentHeight, 0) + ((daySegments.length - 1) * metrics.segmentGap) + (metrics.dayPaddingY * 2) + metrics.dayHeadHeight
+                : (metrics.dayPaddingY * 2) + metrics.dayHeadHeight + metrics.offlineHeight;
+
+            return { segmentLayouts, dayHeight };
+        });
+
+        const rowHeights = [
+            Math.max(...dayLayouts.slice(0, 3).map((day) => day.dayHeight), 96),
+            Math.max(...dayLayouts.slice(3).map((day) => day.dayHeight))
+        ];
+        const emoteSize = Math.min(96, cellWidth * 0.78);
+        const boardHeight = (metrics.boardPadding * 2) + metrics.titleHeight + metrics.dayGap + rowHeights[0] + metrics.dayGap + rowHeights[1];
+        return { metrics, dayLayouts, boardHeight, cellWidth, rowHeights, emoteSize };
+    }
+
     const dayLayouts = board.dayGroups.map((daySegments) => {
         const segmentLayouts = daySegments.map((segment) => {
             const segmentWidth = (layout === 'horizontal'
@@ -386,15 +499,15 @@ function getLayoutMetrics(layout) {
             boardWidth: 330,
             margin: 24,
             boardPadding: 14,
-            titleHeight: 102,
-            titleTop: 40,
-            titleFont: '900 52px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif',
+            titleHeight: 116,
+            titleTop: 34,
+            titleFont: '900 44px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif',
             weekFont: '900 11px Inter, system-ui, sans-serif',
             dayGap: 10,
             dayPaddingY: 10,
             dayPaddingX: 12,
             dayHeadHeight: 15,
-            offlineHeight: 40,
+            offlineHeight: 28,
             segmentHeight: 70,
             segmentGap: 8,
             dayRadius: 13,
@@ -412,15 +525,15 @@ function getLayoutMetrics(layout) {
             boardWidth: 1120,
             margin: 24,
             boardPadding: 18,
-            titleHeight: 96,
-            titleTop: 36,
-            titleFont: '900 54px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif',
+            titleHeight: 104,
+            titleTop: 32,
+            titleFont: '900 48px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif',
             weekFont: '900 11px Inter, system-ui, sans-serif',
             dayGap: 12,
             dayPaddingY: 12,
             dayPaddingX: 12,
             dayHeadHeight: 20,
-            offlineHeight: 174,
+            offlineHeight: 64,
             segmentHeight: 112,
             segmentGap: 10,
             dayRadius: 13,
@@ -454,7 +567,8 @@ function getBoardHeight(board, layout) {
 }
 
 async function buildScheduleCanvas(board, layout) {
-    const { metrics, dayLayouts, boardHeight } = prepareBoardLayout(board, layout);
+    const prepared = prepareBoardLayout(board, layout);
+    const { metrics, dayLayouts, boardHeight } = prepared;
     const scale = 2;
     const canvasWidth = metrics.canvasWidth;
     const canvasHeight = boardHeight + (metrics.margin * 2);
@@ -549,11 +663,152 @@ async function buildScheduleCanvas(board, layout) {
     ctx.restore();
 
     const isHorizontal = layout === 'horizontal';
+    if (isHorizontal) {
+        const cellWidth = prepared.cellWidth;
+        const rowHeights = prepared.rowHeights;
+        const topRowY = boardY + metrics.boardPadding + metrics.titleHeight + metrics.dayGap;
+        const bottomRowY = topRowY + rowHeights[0] + metrics.dayGap;
+        const emote = board.currentEmoteImage;
+
+        if (emote) {
+            const emoteX = boardX + metrics.boardPadding;
+            const emoteY = topRowY;
+            drawContainImage(ctx, emote, emoteX + 8, emoteY + 8, cellWidth - 16, rowHeights[0] - 16);
+        }
+
+        const drawHorizontalDay = (index, dayX, dayY, dayWidth, dayHeight) => {
+            const daySegments = board.dayGroups[index];
+            const dayLayout = dayLayouts[index];
+            const day = board.days[index];
+            const dayLabel = day.label;
+            const dayName = day.name;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.14)';
+            ctx.shadowBlur = 0;
+            roundRect(ctx, dayX, dayY, dayWidth, dayHeight, 13);
+            const dayGradient = ctx.createLinearGradient(dayX, dayY, dayX + dayWidth, dayY);
+            dayGradient.addColorStop(0, 'rgba(170, 119, 187, 0.72)');
+            dayGradient.addColorStop(1, 'rgba(72, 62, 193, 0.78)');
+            ctx.fillStyle = dayGradient;
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            roundRect(ctx, dayX, dayY, dayWidth, dayHeight, 13);
+            ctx.clip();
+            const sheen = ctx.createLinearGradient(dayX, dayY, dayX, dayY + dayHeight);
+            sheen.addColorStop(0, 'rgba(255,255,255,0.07)');
+            sheen.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = sheen;
+            ctx.fillRect(dayX, dayY, dayWidth, dayHeight);
+            ctx.restore();
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(243, 240, 255, 0.48)';
+            ctx.font = `900 ${metrics.dayLabelSize}px Inter, system-ui, sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(dayName, dayX + 4, dayY + 4);
+            ctx.fillStyle = 'rgba(255,255,255,0.56)';
+            ctx.font = `900 11px Inter, system-ui, sans-serif`;
+            ctx.fillText(dayLabel, dayX + dayWidth - ctx.measureText(dayLabel).width - 4, dayY + 4);
+            ctx.restore();
+
+            let contentY = dayY + metrics.dayPaddingY + metrics.dayHeadHeight;
+            if (!daySegments.length) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(239, 236, 255, 0.92)';
+                ctx.font = '900 17px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(38, 25, 100, 0.28)';
+                ctx.shadowOffsetY = 3;
+                ctx.fillText('OFFLINE', dayX + dayWidth / 2, contentY + (metrics.offlineHeight / 2));
+                ctx.restore();
+            } else {
+                for (const item of dayLayout.segmentLayouts) {
+                    const segment = item.segment;
+                    const segmentX = dayX + 4;
+                    const segmentY = contentY;
+                    const segmentWidth = dayWidth - 8;
+                    const segmentHeight = item.segmentHeight;
+                    const segmentArt = segment.category?.id ? board.artImages.get(segment.category.id) : null;
+                    const start = new Date(segment.start_time);
+                    const timeLabel = formatDate(start, board.timeZone, {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    const weekdayLabel = formatDate(start, board.timeZone, { weekday: 'short' }).toUpperCase();
+
+                    ctx.save();
+                    roundRect(ctx, segmentX, segmentY, segmentWidth, segmentHeight, 12);
+                    ctx.clip();
+                    const segmentGradient = ctx.createLinearGradient(segmentX, segmentY, segmentX + segmentWidth, segmentY + segmentHeight);
+                    segmentGradient.addColorStop(0, 'rgba(16, 18, 54, 0.45)');
+                    segmentGradient.addColorStop(1, 'rgba(10, 12, 34, 0.92)');
+                    ctx.fillStyle = segmentGradient;
+                    ctx.fillRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                    if (segmentArt) {
+                        ctx.globalAlpha = 0.58;
+                        drawCoverImage(ctx, segmentArt, segmentX, segmentY, segmentWidth, segmentHeight);
+                        ctx.globalAlpha = 1;
+                    }
+                    const overlay = ctx.createLinearGradient(segmentX, segmentY, segmentX + segmentWidth, segmentY);
+                    overlay.addColorStop(0, 'rgba(10, 12, 34, 0.6)');
+                    overlay.addColorStop(0.7, 'rgba(10, 12, 34, 0.18)');
+                    overlay.addColorStop(1, 'rgba(10, 12, 34, 0.4)');
+                    ctx.fillStyle = overlay;
+                    ctx.fillRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+                    ctx.font = `900 ${metrics.timeSize}px Inter, system-ui, sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+                    ctx.shadowOffsetY = 2;
+                    ctx.fillText(timeLabel, segmentX + 10, segmentY + 8);
+                    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+                    ctx.font = `900 ${metrics.weekdaySize}px Inter, system-ui, sans-serif`;
+                    ctx.fillText(weekdayLabel, segmentX + 10, segmentY + 28);
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(255,255,255,0.98)';
+                    ctx.font = `800 ${metrics.titleSize}px Inter, system-ui, sans-serif`;
+                    ctx.textBaseline = 'top';
+                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                    ctx.shadowOffsetY = 2;
+                    item.wrapped.forEach((line, index) => {
+                        ctx.fillText(line, segmentX + item.titleX, segmentY + item.titleY + (index * item.lineHeight));
+                    });
+                    ctx.restore();
+
+                    contentY += segmentHeight + metrics.segmentGap;
+                }
+            }
+        };
+
+        const row1Y = topRowY;
+        const row2Y = topRowY + rowHeights[0] + metrics.dayGap;
+        const dayWidth = cellWidth;
+
+        drawHorizontalDay(0, boardX + metrics.boardPadding + (1 * (dayWidth + metrics.dayGap)), row1Y, dayWidth, rowHeights[0]);
+        drawHorizontalDay(1, boardX + metrics.boardPadding + (2 * (dayWidth + metrics.dayGap)), row1Y, dayWidth, rowHeights[0]);
+        drawHorizontalDay(2, boardX + metrics.boardPadding + (3 * (dayWidth + metrics.dayGap)), row1Y, dayWidth, rowHeights[0]);
+        drawHorizontalDay(3, boardX + metrics.boardPadding + (0 * (dayWidth + metrics.dayGap)), row2Y, dayWidth, rowHeights[1]);
+        drawHorizontalDay(4, boardX + metrics.boardPadding + (1 * (dayWidth + metrics.dayGap)), row2Y, dayWidth, rowHeights[1]);
+        drawHorizontalDay(5, boardX + metrics.boardPadding + (2 * (dayWidth + metrics.dayGap)), row2Y, dayWidth, rowHeights[1]);
+        drawHorizontalDay(6, boardX + metrics.boardPadding + (3 * (dayWidth + metrics.dayGap)), row2Y, dayWidth, rowHeights[1]);
+        return canvas;
+    }
+
     const daysTop = boardY + metrics.boardPadding + metrics.titleHeight + metrics.dayGap;
     let currentY = daysTop;
-    const dayWidth = layout === 'horizontal'
-        ? (metrics.boardWidth - (metrics.boardPadding * 2) - (6 * metrics.dayGap)) / 7
-        : metrics.boardWidth - (metrics.boardPadding * 2);
+    const dayWidth = metrics.boardWidth - (metrics.boardPadding * 2);
 
     for (let i = 0; i < board.dayGroups.length; i += 1) {
         const daySegments = board.dayGroups[i];
@@ -562,10 +817,8 @@ async function buildScheduleCanvas(board, layout) {
         const dayLabel = day.label;
         const dayName = day.name;
         const dayHeight = dayLayout.dayHeight;
-        const dayX = isHorizontal
-            ? boardX + metrics.boardPadding + (i * (dayWidth + metrics.dayGap))
-            : boardX + metrics.boardPadding;
-        const dayY = isHorizontal ? daysTop : currentY;
+        const dayX = boardX + metrics.boardPadding;
+        const dayY = currentY;
 
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.14)';
@@ -594,30 +847,17 @@ async function buildScheduleCanvas(board, layout) {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(dayName, dayX + 4, dayY + 4);
-        if (isHorizontal) {
-            ctx.fillStyle = 'rgba(255,255,255,0.56)';
-            ctx.font = `900 11px Inter, system-ui, sans-serif`;
-            ctx.fillText(dayLabel, dayX + dayWidth - ctx.measureText(dayLabel).width - 4, dayY + 4);
-        }
         ctx.restore();
 
         let contentY = dayY + metrics.dayPaddingY + metrics.dayHeadHeight;
         if (!daySegments.length) {
             ctx.save();
-            roundRect(ctx, dayX + 6, contentY, dayWidth - 12, metrics.offlineHeight, 12);
-            const offlineGradient = ctx.createLinearGradient(dayX, contentY, dayX, contentY + metrics.offlineHeight);
-            offlineGradient.addColorStop(0, 'rgba(122, 76, 194, 0.34)');
-            offlineGradient.addColorStop(1, 'rgba(22, 17, 118, 0.25)');
-            ctx.fillStyle = offlineGradient;
-            ctx.fill();
-            ctx.fillStyle = 'rgba(239, 236, 255, 0.96)';
-            ctx.font = isHorizontal
-                ? '900 23px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif'
-                : '900 18px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(239, 236, 255, 0.92)';
+            ctx.font = '900 17px "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.shadowColor = 'rgba(38, 25, 100, 0.35)';
-            ctx.shadowOffsetY = 4;
+            ctx.shadowColor = 'rgba(38, 25, 100, 0.28)';
+            ctx.shadowOffsetY = 3;
             ctx.fillText('OFFLINE', dayX + dayWidth / 2, contentY + (metrics.offlineHeight / 2));
             ctx.restore();
         } else {
@@ -686,9 +926,7 @@ async function buildScheduleCanvas(board, layout) {
             }
         }
 
-        if (!isHorizontal) {
-            currentY += dayHeight + metrics.dayGap;
-        }
+        currentY += dayHeight + metrics.dayGap;
     }
 
     return canvas;
@@ -701,7 +939,6 @@ async function exportPng() {
     }
 
     setMessage(`Rendering ${state.layout} PNG...`, '');
-
     const board = state.currentBoard;
     const artEntries = [...new Map(board.segments
         .map((segment) => {
@@ -711,23 +948,38 @@ async function exportPng() {
         .filter(Boolean)).entries()];
 
     const artImages = new Map();
+    console.log('Loading art for categories:', artEntries.map(([id]) => id));
     await Promise.all(artEntries.map(async ([categoryId, url]) => {
         try {
+            console.log(`Attempting to load art for category ${categoryId}:`, url);
             artImages.set(categoryId, await loadImage(url));
         } catch (error) {
-            // Skip art that does not permit canvas export.
+            console.warn(`Skipped art for category ${categoryId}:`, error.message);
         }
     }));
+
+    let currentEmoteImage = null;
+    const currentEmote = board.currentEmote || pickRandomItem(board.channelEmotes || []) || null;
+    if (currentEmote?.imageUrl) {
+        try {
+            currentEmoteImage = await loadImage(currentEmote.imageUrl);
+        } catch (error) {
+            console.warn('Skipped channel emote for PNG export:', error.message);
+        }
+    }
 
     const exportBoard = {
         weekLabel: board.weekLabel,
         timeZone: board.timeZone,
         dayGroups: board.dayGroups,
         days: board.days,
-        artImages
+        artImages,
+        currentEmote,
+        currentEmoteImage
     };
 
     const canvas = await buildScheduleCanvas(exportBoard, state.layout);
+
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) {
         setMessage('PNG export failed.', 'error');
@@ -819,6 +1071,26 @@ async function fetchSchedule(broadcasterId, weekStart, weekEnd) {
     return { info, segments };
 }
 
+async function fetchChannelEmotes(broadcasterId) {
+    const url = new URL('https://api.twitch.tv/helix/chat/emotes');
+    url.searchParams.set('broadcaster_id', broadcasterId);
+
+    const response = await fetch(url, {
+        headers: {
+            'Client-ID': state.clientId,
+            Authorization: `Bearer ${state.accessToken}`
+        }
+    });
+
+    if (!response.ok) {
+        const details = await response.json().catch(() => null);
+        throw new Error(details?.message || `Twitch emotes request failed (${response.status})`);
+    }
+
+    const payload = await response.json();
+    return getStaticChannelEmotes(payload);
+}
+
 function groupSegmentsByDay(segments, timeZone) {
     const groups = new Map();
     for (const segment of segments) {
@@ -838,7 +1110,15 @@ function renderDayCard(date, segments, timeZone) {
         ? segments.map((segment) => {
             const start = new Date(segment.start_time);
             const categoryId = segment.category?.id;
+            const categoryName = segment.category?.name || 'Unknown';
             const art = categoryId ? toBoxArtUrl(categoryId, 160, 214) : '';
+            
+            if (art) {
+                console.log(`📺 "${segment.title}" (${categoryName}):`, art);
+            } else {
+                console.log(`⚠️ "${segment.title}" - No category ID`);
+            }
+            
             const timeLabel = formatDate(start, timeZone, {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -860,7 +1140,7 @@ function renderDayCard(date, segments, timeZone) {
         : `<div class="day-empty">Offline</div>`;
 
     return `
-        <section class="day" data-day="${dayKey}">
+        <section class="day${segments.length ? '' : ' day-empty-state'}" data-day="${dayKey}">
             <div class="day-head">
                 <strong>${dayName}</strong>
                 <span>${dayLabel}</span>
@@ -870,10 +1150,76 @@ function renderDayCard(date, segments, timeZone) {
     `;
 }
 
-function renderBoard(segments, weekStart, timeZone, info) {
+function renderEmoteTile(emotes) {
+    if (!emotes.length) {
+        return {
+            html: `
+            <div class="emote-tile emote-empty" aria-label="No static emotes available">
+                <span>No emotes</span>
+            </div>
+        `,
+            emote: null
+        };
+    }
+
+    const emote = pickRandomItem(emotes) || emotes[0];
+    const alt = emote.name || 'Channel emote';
+
+    return {
+        emote,
+        html: `
+        <button
+            class="emote-tile"
+            type="button"
+            data-emote-roll="true"
+            data-emote-id="${escapeHtml(emote.id)}"
+            aria-label="Roll a random emote"
+            title="Click to roll a random emote"
+        >
+            <img
+                class="emote-image"
+                data-emote-image="true"
+                src="${escapeHtml(emote.imageUrl)}"
+                alt="${escapeHtml(alt)}"
+                draggable="false"
+            >
+        </button>
+    `
+    };
+}
+
+function wireEmoteRoller(emotes) {
+    const button = els.days.querySelector('[data-emote-roll="true"]');
+    const image = els.days.querySelector('[data-emote-image="true"]');
+    if (!button || !image || !emotes.length) return;
+
+    const roll = (excludeId = '') => {
+        const next = pickRandomItem(emotes, excludeId) || emotes[0];
+        if (!next) return;
+        if (next.id === excludeId && emotes.length === 1) return;
+        button.dataset.emoteId = next.id;
+        image.src = next.imageUrl;
+        image.alt = next.name || 'Channel emote';
+        button.title = `Click to roll a random emote: ${next.name || 'Channel emote'}`;
+        if (state.currentBoard) {
+            state.currentBoard.currentEmote = next;
+        }
+    };
+
+    button.addEventListener('click', () => {
+        roll(button.dataset.emoteId || '');
+    });
+
+    image.addEventListener('error', () => {
+        roll(button.dataset.emoteId || '');
+    });
+}
+
+function renderBoard(segments, weekStart, timeZone, info, extras = {}) {
     const grouped = groupSegmentsByDay(segments, timeZone);
     const days = [];
     const dayGroups = [];
+    const emoteTile = state.layout === 'horizontal' ? renderEmoteTile(extras.channelEmotes || []) : { html: '', emote: null };
 
     for (let i = 0; i < 7; i += 1) {
         const day = new Date(weekStart.getTime() + i * 86400000);
@@ -883,7 +1229,19 @@ function renderBoard(segments, weekStart, timeZone, info) {
         days.push(renderDayCard(day, daySegments, timeZone));
     }
 
-    els.days.innerHTML = days.join('');
+    if (state.layout === 'horizontal') {
+        const topDays = [emoteTile.html, ...days.slice(0, 3)].join('');
+        const bottomDays = days.slice(3).join('');
+        els.days.innerHTML = `
+            <div class="horizontal-board">
+                <div class="horizontal-days horizontal-days-top">${topDays}</div>
+                <div class="horizontal-days horizontal-days-bottom">${bottomDays}</div>
+            </div>
+        `;
+        wireEmoteRoller(extras.channelEmotes || []);
+    } else {
+        els.days.innerHTML = days.join('');
+    }
     els.weekLabel.textContent = formatWeekLabel(weekStart, new Date(weekStart.getTime() + 7 * 86400000), timeZone);
     setBoardTitle();
     els.boardSubtitle.textContent = '';
@@ -894,6 +1252,9 @@ function renderBoard(segments, weekStart, timeZone, info) {
         info: info || null,
         weekLabel: formatWeekLabel(weekStart, new Date(weekStart.getTime() + 7 * 86400000), timeZone),
         dayGroups,
+        broadcasterId: extras.broadcasterId || null,
+        channelEmotes: extras.channelEmotes || [],
+        currentEmote: emoteTile.emote,
         days: dayGroups.map((daySegments, index) => {
             const day = new Date(weekStart.getTime() + index * 86400000);
             return {
@@ -915,9 +1276,7 @@ function renderBoard(segments, weekStart, timeZone, info) {
 
 function updateWeekButtons() {
     const enabled = Boolean(state.accessToken && state.clientId);
-    els.prevWeekBtn.disabled = !enabled;
-    els.thisWeekBtn.disabled = !enabled;
-    els.nextWeekBtn.disabled = !enabled;
+    els.weekOffsetSelect.disabled = !enabled;
     els.loadBtn.disabled = !enabled;
 }
 
@@ -947,7 +1306,17 @@ async function loadSchedule() {
             payload.segments.length ? 'success' : 'error'
         );
 
-        renderBoard(payload.segments, weekStart, state.timezone, payload.info);
+        let channelEmotes = [];
+        try {
+            channelEmotes = await fetchChannelEmotes(broadcasterId);
+        } catch (emoteError) {
+            console.warn('Failed to load channel emotes:', emoteError);
+        }
+
+        renderBoard(payload.segments, weekStart, state.timezone, payload.info, {
+            broadcasterId,
+            channelEmotes
+        });
     } catch (error) {
         els.days.innerHTML = '';
         els.weekLabel.textContent = 'Week label';
@@ -958,18 +1327,6 @@ async function loadSchedule() {
     }
 }
 
-function shiftWeek(delta) {
-    state.weekOffset += delta;
-    saveState();
-    loadSchedule();
-}
-
-function jumpToCurrentWeek() {
-    state.weekOffset = 0;
-    saveState();
-    loadSchedule();
-}
-
 function wireEvents() {
     els.broadcasterInput.addEventListener('input', () => {
         state.broadcasterInput = els.broadcasterInput.value.trim();
@@ -977,10 +1334,15 @@ function wireEvents() {
         updateWeekButtons();
     });
 
-    els.timezoneInput.addEventListener('input', () => {
-        state.timezone = els.timezoneInput.value.trim() || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    els.timezoneInput.addEventListener('change', () => {
+        state.timezone = els.timezoneInput.value || Intl.DateTimeFormat().resolvedOptions().timeZone;
         saveState();
-        updateChips();
+    });
+
+    els.weekOffsetSelect.addEventListener('change', () => {
+        const nextOffset = Number(els.weekOffsetSelect.value);
+        state.weekOffset = Number.isNaN(nextOffset) ? 0 : nextOffset;
+        saveState();
     });
 
     els.connectBtn.addEventListener('click', connectTwitch);
@@ -988,9 +1350,6 @@ function wireEvents() {
     els.verticalLayoutBtn.addEventListener('click', () => setLayout('vertical'));
     els.horizontalLayoutBtn.addEventListener('click', () => setLayout('horizontal'));
     els.exportPngBtn.addEventListener('click', exportPng);
-    els.prevWeekBtn.addEventListener('click', () => shiftWeek(-1));
-    els.nextWeekBtn.addEventListener('click', () => shiftWeek(1));
-    els.thisWeekBtn.addEventListener('click', jumpToCurrentWeek);
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.target === els.broadcasterInput || event.target === els.timezoneInput)) {
@@ -1014,7 +1373,6 @@ function startValidationLoop() {
             state.tokenLogin = info.login || state.tokenLogin;
             state.tokenUserId = info.user_id || state.tokenUserId;
             saveState();
-            updateChips();
         } catch (error) {
             state.accessToken = '';
             state.tokenLogin = '';

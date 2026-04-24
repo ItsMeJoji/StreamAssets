@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stream Schedule</title>
+    <link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
     <style>
         :root {
             --bg: #0a0618;
@@ -25,6 +26,153 @@
                 radial-gradient(circle at top left, rgba(185, 147, 255, 0.28), transparent 24%),
                 radial-gradient(circle at top right, rgba(102, 217, 255, 0.18), transparent 22%),
                 linear-gradient(180deg, #1d1842 0%, #120b33 36%, #070515 100%);
+        }
+
+        #header {
+            width: min(1120px, calc(100vw - 24px));
+            margin: 12px auto 0;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            border-radius: 16px;
+            background: rgba(17, 18, 52, 0.72);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            z-index: 1001;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        #header h1 a {
+            color: rgba(255,255,255,0.92);
+            text-decoration: none;
+        }
+
+        #header nav > ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #header nav > ul > li {
+            display: inline-block;
+        }
+
+        #header nav > ul > li > a.menuToggle {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 10px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.08);
+        }
+
+        #header nav > ul > li > a.menuToggle::after {
+            content: "\f0c9";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        #menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(360px, 88vw);
+            height: 100dvh;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.12), transparent 36%),
+                linear-gradient(180deg, rgba(126, 113, 200, 0.98) 0%, rgba(76, 59, 175, 0.99) 52%, rgba(18, 0, 161, 1) 100%);
+            padding: 56px 30px 28px;
+            transform: translateX(100%);
+            transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 1100;
+            overflow-y: auto;
+            border-left: 1px solid rgba(255,255,255,0.14);
+        }
+
+        body.is-menu-visible #menu {
+            transform: translateX(0);
+        }
+
+        #menu ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #menu ul > li {
+            border-top: 1px solid rgba(255,255,255,0.18);
+        }
+
+        #menu ul > li:first-child {
+            border-top: 0;
+        }
+
+        #menu ul > li > a {
+            display: block;
+            color: rgba(255,255,255,0.96);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            font-size: 0.88rem;
+            padding: 18px 0;
+        }
+
+        #menu .menu-socials {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+        }
+
+        #menu .menu-socials a {
+            color: rgba(255,255,255,0.95);
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        #menu .close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255,255,255,0.95);
+            cursor: pointer;
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+
+        #menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.36);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 340ms cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 1090;
+        }
+
+        body.is-menu-visible #menu-overlay {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .shell {
@@ -92,7 +240,7 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
         }
 
@@ -108,7 +256,8 @@
             color: rgba(255,255,255,0.72);
         }
 
-        .field input {
+        .field input,
+        .field select {
             width: 100%;
             border: 0;
             border-radius: 14px;
@@ -118,35 +267,22 @@
             font: inherit;
         }
 
-        .field input:focus {
+        .field select {
+            appearance: none;
+            cursor: pointer;
+            color-scheme: dark;
+            -webkit-text-fill-color: var(--text);
+        }
+
+        .field select option {
+            color: #10153d !important;
+            background: #eef0ff !important;
+        }
+
+        .field input:focus,
+        .field select:focus {
             outline: 2px solid rgba(185, 147, 255, 0.8);
             outline-offset: 2px;
-        }
-
-        .status-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2px;
-            color: var(--muted);
-            font-size: 0.92rem;
-        }
-
-        .chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .chip {
-            padding: 7px 10px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.08);
-            font-size: 0.82rem;
-            color: rgba(255,255,255,0.84);
         }
 
         .actions {
@@ -200,7 +336,7 @@
 
         .board-wrap {
             margin-top: 18px;
-            width: min(330px, calc(100vw - 24px));
+            width: 100%;
             margin-left: auto;
             margin-right: auto;
             padding: 16px 14px 18px;
@@ -213,7 +349,7 @@
         }
 
         body.layout-horizontal .board-wrap {
-            width: min(1120px, calc(100vw - 24px));
+            width: 100%;
         }
 
         .board-head {
@@ -278,7 +414,64 @@
         }
 
         body.layout-horizontal .days {
-            grid-template-columns: repeat(7, minmax(0, 1fr));
+            grid-template-columns: 1fr;
+        }
+
+        .horizontal-board {
+            display: grid;
+            gap: 12px;
+        }
+
+        .emote-tile {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .emote-tile:focus-visible {
+            outline: 2px solid rgba(255,255,255,0.78);
+            outline-offset: 3px;
+        }
+
+        .emote-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .emote-empty {
+            color: rgba(239, 236, 255, 0.86);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.72rem;
+            cursor: default;
+        }
+
+        .horizontal-days {
+            display: grid;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .horizontal-days-top {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .horizontal-days-bottom {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
         .day {
@@ -293,7 +486,15 @@
             gap: 7px;
         }
 
+        .day.day-empty-state {
+            min-height: 96px;
+        }
+
         body.layout-horizontal .day {
+            min-height: 260px;
+        }
+
+        body.layout-horizontal .day.day-empty-state {
             min-height: 260px;
         }
 
@@ -325,11 +526,11 @@
             flex: 1;
             display: grid;
             place-items: center;
-            min-height: 40px;
-            border-radius: 12px;
-            background:
-                radial-gradient(circle at 50% 18%, rgba(255,255,255,0.12), transparent 38%),
-                linear-gradient(180deg, rgba(122, 76, 194, 0.34), rgba(22, 17, 118, 0.25));
+            min-height: 0;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
             color: rgba(239, 236, 255, 0.88);
             font-weight: 900;
             font-size: 1.15rem;
@@ -340,7 +541,7 @@
         }
 
         body.layout-horizontal .day-empty {
-            min-height: 174px;
+            min-height: 0;
             font-size: 1.1rem;
         }
 
@@ -478,8 +679,12 @@
             body.print-horizontal .hero,
             body.print-vertical .controls,
             body.print-horizontal .controls,
-            body.print-vertical .status-row,
-            body.print-horizontal .status-row,
+            body.print-vertical #header,
+            body.print-horizontal #header,
+            body.print-vertical #menu,
+            body.print-horizontal #menu,
+            body.print-vertical #menu-overlay,
+            body.print-horizontal #menu-overlay,
             body.print-vertical .actions,
             body.print-horizontal .actions,
             body.print-vertical .message,
@@ -525,16 +730,43 @@
         }
 
         @media (max-width: 700px) {
+            #header { padding: 0 10px; border-radius: 12px; }
+            #header h1 { display: none; }
             .shell { width: min(100vw - 12px, 1200px); margin: 6px auto; padding: 10px; border-radius: 20px; }
             .hero { padding: 18px; }
             .controls { padding: 14px; }
-            .status-row { justify-content: center; }
             .days { grid-template-columns: 1fr; }
             .day { min-height: 0; }
         }
     </style>
 </head>
 <body>
+    <header id="header">
+        <h1><a href="index.html">Stream Assets by ItsMeJoji</a></h1>
+        <nav id="nav">
+            <ul>
+                <li class="special">
+                    <a href="#menu" class="menuToggle"><span>Menu</span></a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <nav id="menu" aria-label="Site menu">
+        <button class="close" type="button" aria-label="Close menu">&times;</button>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="schedule-maker.html">Schedule Maker</a></li>
+            <li><a href="https://itsmejoji.github.io/ShinyPokemonBingoGenerator/" target="_blank" rel="noopener noreferrer">Shiny Bingo Generator</a></li>
+        </ul>
+        <div class="menu-socials">
+            <a href="https://bsky.app/profile/itsmejoji.com" class="fa-brands fa-bluesky" aria-label="Bluesky"></a>
+            <a href="https://www.youtube.com/c/itsmejoji" class="fa-brands fa-youtube" aria-label="YouTube"></a>
+            <a href="https://www.twitch.tv/itsmejoji/" class="fa-brands fa-twitch" aria-label="Twitch"></a>
+        </div>
+    </nav>
+    <div id="menu-overlay" aria-hidden="true"></div>
+
     <div class="shell">
         <section class="hero">
             <div class="eyebrow">Twitch stream schedule</div>
@@ -552,29 +784,26 @@
                     </div>
                     <div class="field">
                         <label for="timezoneInput">Display Time Zone</label>
-                        <input id="timezoneInput" type="text" placeholder="America/Los_Angeles" />
+                        <select id="timezoneInput" aria-label="Display time zone"></select>
+                    </div>
+                    <div class="field">
+                        <label for="weekOffsetSelect">Week</label>
+                        <select id="weekOffsetSelect" aria-label="Week selection">
+                            <option value="-1">Previous Week</option>
+                            <option value="0">This Week</option>
+                            <option value="1">Next Week</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="status-row">
-                    <div class="chips">
-                        <span class="chip" id="clientChip">Client missing</span>
-                        <span class="chip" id="tokenChip">Not connected</span>
-                        <span class="chip" id="broadcasterChip">Broadcaster not loaded</span>
-                        <span class="chip" id="timezoneChip">Time zone pending</span>
+                <div class="actions">
+                    <button class="btn secondary" id="connectBtn" type="button">Connect Twitch</button>
+                    <button class="btn" id="loadBtn" type="button">Load Schedule</button>
+                    <div class="toggle-group" role="group" aria-label="Schedule layout">
+                        <button class="btn secondary" id="verticalLayoutBtn" type="button">Vertical</button>
+                        <button class="btn secondary" id="horizontalLayoutBtn" type="button">Horizontal</button>
                     </div>
-                    <div class="actions">
-                        <button class="btn secondary" id="prevWeekBtn" type="button">Previous Week</button>
-                        <button class="btn secondary" id="thisWeekBtn" type="button">This Week</button>
-                        <button class="btn secondary" id="nextWeekBtn" type="button">Next Week</button>
-                        <button class="btn secondary" id="connectBtn" type="button">Connect Twitch</button>
-                        <button class="btn" id="loadBtn" type="button">Load Schedule</button>
-                        <div class="toggle-group" role="group" aria-label="Schedule layout">
-                            <button class="btn secondary" id="verticalLayoutBtn" type="button">Vertical</button>
-                            <button class="btn secondary" id="horizontalLayoutBtn" type="button">Horizontal</button>
-                        </div>
-                        <button class="btn secondary" id="exportPngBtn" type="button">Print PNG</button>
-                    </div>
+                    <button class="btn secondary" id="exportPngBtn" type="button">Print PNG</button>
                 </div>
 
                 <div class="message" id="message">Connect with Twitch, then load a broadcaster to render the week.</div>
@@ -594,5 +823,38 @@
     </div>
 
     <script type="module" src="assets/js/schedule-maker.js"></script>
+    <script>
+        (() => {
+            const body = document.body;
+            const toggle = document.querySelector('.menuToggle');
+            const menu = document.getElementById('menu');
+            const closeButton = menu?.querySelector('.close');
+            const overlay = document.getElementById('menu-overlay');
+
+            const closeMenu = () => body.classList.remove('is-menu-visible');
+            const openMenu = () => body.classList.add('is-menu-visible');
+
+            toggle?.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (body.classList.contains('is-menu-visible')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+
+            closeButton?.addEventListener('click', closeMenu);
+            overlay?.addEventListener('click', closeMenu);
+            menu?.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', closeMenu);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeMenu();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
