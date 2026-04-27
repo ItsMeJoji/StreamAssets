@@ -260,8 +260,31 @@ function escapeHtml(value) {
         .replaceAll("'", '&#39;');
 }
 
-function toBoxArtUrl(categoryId, width = 160, height = 214) {
+
+function toBoxArtUrl(categoryId, width = 160, height = 214, useIGDB = false) {
+    if (useIGDB) {
+        return `https://static-cdn.jtvnw.net/ttv-boxart/${categoryId}_IGDB-${width}x${height}.jpg`;
+    }
     return `https://static-cdn.jtvnw.net/ttv-boxart/${categoryId}-${width}x${height}.jpg`;
+}
+
+/**
+ * Checks if a Twitch box art URL redirects to the generic 404 image.
+ * Returns the IGDB fallback URL if a redirect is detected.
+ */
+async function resolveBoxArtUrl(categoryId, width, height) {
+    const url = toBoxArtUrl(categoryId, width, height);
+    try {
+        const response = await fetch(url);
+        if (response.ok && response.url.includes('404_boxart')) {
+            console.log(`[Art] Redirect detected for ${categoryId}, switching to IGDB.`);
+            return toBoxArtUrl(categoryId, width, height, true);
+        }
+        return url;
+    } catch (err) {
+        console.warn(`[Art] Failed to resolve redirect for ${categoryId}:`, err);
+        return url;
+    }
 }
 
 function loadImage(url) {
@@ -949,12 +972,22 @@ async function exportPng() {
 
     const artImages = new Map();
     console.log('Loading art for categories:', artEntries.map(([id]) => id));
-    await Promise.all(artEntries.map(async ([categoryId, url]) => {
+
+    await Promise.all(artEntries.map(async ([categoryId, originalUrl]) => {
         try {
-            console.log(`Attempting to load art for category ${categoryId}:`, url);
-            artImages.set(categoryId, await loadImage(url));
+            // Resolve the best URL (checking for 404 redirects)
+            const resolvedUrl = await resolveBoxArtUrl(categoryId, 512, 683);
+            console.log(`Attempting to load art for category ${categoryId}:`, resolvedUrl);
+            artImages.set(categoryId, await loadImage(resolvedUrl));
         } catch (error) {
-            console.warn(`Skipped art for category ${categoryId}:`, error.message);
+            // Final fallback if everything fails
+            const igdbUrl = toBoxArtUrl(categoryId, 512, 683, true);
+            try {
+                console.log(`Total failure fallback to IGDB for category ${categoryId}:`, igdbUrl);
+                artImages.set(categoryId, await loadImage(igdbUrl));
+            } catch (igdbError) {
+                console.warn(`Skipped art for category ${categoryId}:`, error.message, '| IGDB fallback failed:', igdbError.message);
+            }
         }
     }));
 
@@ -1111,7 +1144,7 @@ function renderDayCard(date, segments, timeZone) {
             const start = new Date(segment.start_time);
             const categoryId = segment.category?.id;
             const categoryName = segment.category?.name || 'Unknown';
-            const art = categoryId ? toBoxArtUrl(categoryId, 160, 214) : '';
+            const art = segment.resolvedArtUrl || (categoryId ? toBoxArtUrl(categoryId, 160, 214) : '');
             
             if (art) {
                 console.log(`📺 "${segment.title}" (${categoryName}):`, art);
@@ -1305,6 +1338,17 @@ async function loadSchedule() {
                 : 'No schedule entries were found for this week.',
             payload.segments.length ? 'success' : 'error'
         );
+
+        // Pre-resolve box art URLs to handle 404 redirects to the generic image
+        if (payload.segments.length) {
+            setMessage('Optimizing box art sources...', '');
+            await Promise.all(payload.segments.map(async (segment) => {
+                if (segment.category?.id) {
+                    segment.resolvedArtUrl = await resolveBoxArtUrl(segment.category.id, 160, 214);
+                }
+            }));
+            setMessage(`Loaded ${payload.segments.length} scheduled segment(s).`, 'success');
+        }
 
         let channelEmotes = [];
         try {
