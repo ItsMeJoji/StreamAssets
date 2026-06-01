@@ -9,6 +9,7 @@ const state = {
     timezone: localStorage.getItem('schedule_maker_timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone,
     weekOffset: Number(localStorage.getItem('schedule_maker_week_offset') || 0),
     layout: localStorage.getItem('schedule_maker_layout') || 'vertical',
+    customItems: loadCustomItems(),
     tokenRefreshTimer: null,
     validating: false,
     currentBoard: null
@@ -27,11 +28,20 @@ const els = {
     loadBtn: document.getElementById('loadBtn'),
     verticalLayoutBtn: document.getElementById('verticalLayoutBtn'),
     horizontalLayoutBtn: document.getElementById('horizontalLayoutBtn'),
-    exportPngBtn: document.getElementById('exportPngBtn')
+    exportPngBtn: document.getElementById('exportPngBtn'),
+    customDayInput: document.getElementById('customDayInput'),
+    customTimeInput: document.getElementById('customTimeInput'),
+    customTitleInput: document.getElementById('customTitleInput'),
+    customImageInput: document.getElementById('customImageInput'),
+    addCustomItemBtn: document.getElementById('addCustomItemBtn'),
+    customItemsList: document.getElementById('customItemsList')
 };
 
 const BOARD_TITLE_HTML = '<span>Stream</span><span>Schedule</span>';
 const WEEK_OPTIONS = [-1, 0, 1];
+const CUSTOM_IMAGE_MAX_WIDTH = 960;
+const CUSTOM_IMAGE_MAX_HEIGHT = 540;
+const CUSTOM_IMAGE_TARGET_BYTES = 700 * 1024;
 const TIME_ZONE_OPTIONS = [
     'America/Los_Angeles',
     'America/Denver',
@@ -46,6 +56,28 @@ const TIME_ZONE_OPTIONS = [
     'Asia/Tokyo',
     'Australia/Sydney'
 ];
+
+function loadCustomItems() {
+    try {
+        const raw = localStorage.getItem('schedule_maker_custom_items');
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.filter((item) => item?.id && item?.dateKey && item?.title) : [];
+    } catch (error) {
+        console.warn('Failed to load custom schedule items:', error);
+        return [];
+    }
+}
+
+function saveCustomItems() {
+    try {
+        localStorage.setItem('schedule_maker_custom_items', JSON.stringify(state.customItems));
+    } catch (error) {
+        if (error?.name === 'QuotaExceededError' || error?.code === 22) {
+            throw new Error('Browser storage is full. Remove a manual item or choose a smaller image.');
+        }
+        throw error;
+    }
+}
 
 function saveState() {
     localStorage.setItem('schedule_maker_access_token', state.accessToken);
@@ -97,13 +129,14 @@ function setLayout(layout) {
     updateLayoutButtons();
     if (state.currentBoard) {
         renderBoard(
-            state.currentBoard.segments,
+            state.currentBoard.twitchSegments || state.currentBoard.segments,
             state.currentBoard.weekStart,
             state.currentBoard.timeZone,
             state.currentBoard.info,
             {
                 broadcasterId: state.currentBoard.broadcasterId,
-                channelEmotes: state.currentBoard.channelEmotes
+                channelEmotes: state.currentBoard.channelEmotes,
+                currentEmote: state.currentBoard.currentEmote
             }
         );
     }
@@ -258,6 +291,245 @@ function escapeHtml(value) {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
+}
+
+function escapeCssUrl(value) {
+    return String(value || '').replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Unable to read that image file.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function loadImageFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Unable to load that image file.'));
+        };
+        image.src = url;
+    });
+}
+
+function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(blob);
+            } else {
+                reject(new Error('Unable to prepare that image.'));
+            }
+        }, type, quality);
+    });
+}
+
+async function resizeImageFileAsDataUrl(file) {
+    if (!file?.type?.startsWith('image/')) {
+        throw new Error('Choose an image file for the manual item.');
+    }
+
+    const image = await loadImageFromFile(file);
+    const scale = Math.min(
+        1,
+        CUSTOM_IMAGE_MAX_WIDTH / image.naturalWidth,
+        CUSTOM_IMAGE_MAX_HEIGHT / image.naturalHeight
+    );
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas rendering is not supported in this browser.');
+
+    canvas.width = width;
+    canvas.height = height;
+    ctx.fillStyle = '#101236';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+
+    let blob = null;
+    for (const quality of [0.82, 0.7, 0.58]) {
+        blob = await canvasToBlob(canvas, 'image/jpeg', quality);
+        if (blob.size <= CUSTOM_IMAGE_TARGET_BYTES) break;
+    }
+
+    return readFileAsDataUrl(blob);
+}
+
+function getActiveWeekStart() {
+    const reference = new Date();
+    return getWeekStart(reference, state.timezone, state.weekOffset);
+}
+
+function getDateKeyFromParts(year, month, day) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function getCustomStartTime(item, timeZone) {
+    const [year, month, day] = item.dateKey.split('-').map(Number);
+    const [hour = 12, minute = 0] = String(item.time || '12:00').split(':').map(Number);
+    return zonedTimeToUtc({ year, month, day, hour, minute }, timeZone).toISOString();
+}
+
+function customItemToSegment(item, timeZone) {
+    return {
+        id: item.id,
+        title: item.title,
+        start_time: getCustomStartTime(item, timeZone),
+        end_time: getCustomStartTime(item, timeZone),
+        category: null,
+        customImageUrl: item.imageUrl || '',
+        isCustom: true
+    };
+}
+
+function getCustomSegmentsForWeek(weekStart, timeZone) {
+    const weekKeys = new Set();
+    for (let i = 0; i < 7; i += 1) {
+        weekKeys.add(getDateKey(new Date(weekStart.getTime() + i * 86400000), timeZone));
+    }
+
+    return state.customItems
+        .filter((item) => weekKeys.has(item.dateKey))
+        .map((item) => customItemToSegment(item, timeZone));
+}
+
+function mergeScheduleSegments(segments, weekStart, timeZone) {
+    return [...segments, ...getCustomSegmentsForWeek(weekStart, timeZone)]
+        .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+}
+
+function rerenderCurrentBoard() {
+    if (state.currentBoard) {
+        renderBoard(
+            state.currentBoard.twitchSegments || state.currentBoard.segments || [],
+            state.currentBoard.weekStart,
+            state.currentBoard.timeZone,
+            state.currentBoard.info,
+            {
+                broadcasterId: state.currentBoard.broadcasterId,
+                channelEmotes: state.currentBoard.channelEmotes,
+                currentEmote: state.currentBoard.currentEmote
+            }
+        );
+        return;
+    }
+
+    const weekStart = getActiveWeekStart();
+    renderBoard([], weekStart, state.timezone, null);
+}
+
+function populateCustomDayOptions(weekStart, timeZone) {
+    if (!els.customDayInput) return;
+
+    els.customDayInput.innerHTML = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(weekStart.getTime() + index * 86400000);
+        const dateKey = getDateKey(date, timeZone);
+        const label = `${formatDate(date, timeZone, { weekday: 'short' })} ${formatDate(date, timeZone, { month: 'short', day: 'numeric' })}`;
+        return `<option value="${escapeHtml(dateKey)}">${escapeHtml(label)}</option>`;
+    }).join('');
+}
+
+function renderCustomItemsList(weekStart, timeZone) {
+    if (!els.customItemsList) return;
+
+    const weekKeys = new Set(Array.from({ length: 7 }, (_, index) => (
+        getDateKey(new Date(weekStart.getTime() + index * 86400000), timeZone)
+    )));
+    const items = state.customItems
+        .filter((item) => weekKeys.has(item.dateKey))
+        .sort((a, b) => `${a.dateKey}T${a.time || ''}`.localeCompare(`${b.dateKey}T${b.time || ''}`));
+
+    if (!items.length) {
+        els.customItemsList.innerHTML = '';
+        return;
+    }
+
+    els.customItemsList.innerHTML = items.map((item) => {
+        const [year, month, day] = item.dateKey.split('-').map(Number);
+        const date = zonedTimeToUtc({ year, month, day, hour: 12 }, timeZone);
+        const dayLabel = formatDate(date, timeZone, { weekday: 'short', month: 'short', day: 'numeric' });
+        const timeLabel = item.time || '12:00';
+        return `
+            <div class="custom-item-row" data-custom-id="${escapeHtml(item.id)}">
+                <div class="custom-thumb" style="background-image:url('${escapeCssUrl(item.imageUrl)}')"></div>
+                <div>
+                    <div class="custom-row-title">${escapeHtml(item.title)}</div>
+                    <div class="custom-row-meta">${escapeHtml(dayLabel)} at ${escapeHtml(timeLabel)}</div>
+                </div>
+                <button class="btn danger" type="button" data-remove-custom="${escapeHtml(item.id)}">Remove</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function syncCustomControls(weekStart, timeZone) {
+    populateCustomDayOptions(weekStart, timeZone);
+    renderCustomItemsList(weekStart, timeZone);
+}
+
+async function addCustomItem() {
+    const title = els.customTitleInput.value.trim();
+    const dateKey = els.customDayInput.value;
+    const time = els.customTimeInput.value || '12:00';
+    const file = els.customImageInput.files?.[0];
+
+    if (!dateKey) {
+        setMessage('Choose a day for the manual item.', 'error');
+        return;
+    }
+
+    if (!title) {
+        setMessage('Enter a title for the manual item.', 'error');
+        return;
+    }
+
+    if (!file) {
+        setMessage('Choose an image for the manual item.', 'error');
+        return;
+    }
+
+    try {
+        const imageUrl = await resizeImageFileAsDataUrl(file);
+        const item = {
+            id: `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            dateKey,
+            time,
+            title,
+            imageUrl
+        };
+
+        state.customItems.push(item);
+        try {
+            saveCustomItems();
+        } catch (error) {
+            state.customItems = state.customItems.filter((customItem) => customItem.id !== item.id);
+            throw error;
+        }
+        els.customTitleInput.value = '';
+        els.customImageInput.value = '';
+        rerenderCurrentBoard();
+        setMessage('Manual item added.', 'success');
+    } catch (error) {
+        setMessage(error.message || 'Failed to add the manual item.', 'error');
+    }
+}
+
+function removeCustomItem(id) {
+    state.customItems = state.customItems.filter((item) => item.id !== id);
+    saveCustomItems();
+    rerenderCurrentBoard();
+    setMessage('Manual item removed.', 'success');
 }
 
 
@@ -756,7 +1028,11 @@ async function buildScheduleCanvas(board, layout) {
                     const segmentY = contentY;
                     const segmentWidth = dayWidth - 8;
                     const segmentHeight = item.segmentHeight;
-                    const segmentArt = segment.category?.id ? board.artImages.get(segment.category.id) : null;
+                    const segmentArt = segment.customImageUrl
+                        ? board.artImages.get(segment.id)
+                        : segment.category?.id
+                            ? board.artImages.get(segment.category.id)
+                            : null;
                     const start = new Date(segment.start_time);
                     const timeLabel = formatDate(start, board.timeZone, {
                         hour: '2-digit',
@@ -890,7 +1166,11 @@ async function buildScheduleCanvas(board, layout) {
                 const segmentY = contentY;
                 const segmentWidth = dayWidth - 8;
                 const segmentHeight = item.segmentHeight;
-                const segmentArt = segment.category?.id ? board.artImages.get(segment.category.id) : null;
+                const segmentArt = segment.customImageUrl
+                    ? board.artImages.get(segment.id)
+                    : segment.category?.id
+                        ? board.artImages.get(segment.category.id)
+                        : null;
                 const start = new Date(segment.start_time);
                 const timeLabel = formatDate(start, board.timeZone, {
                     hour: '2-digit',
@@ -969,6 +1249,9 @@ async function exportPng() {
             return categoryId ? [categoryId, toBoxArtUrl(categoryId, 512, 683)] : null;
         })
         .filter(Boolean)).entries()];
+    const customArtEntries = board.segments
+        .filter((segment) => segment.customImageUrl)
+        .map((segment) => [segment.id, segment.customImageUrl]);
 
     const artImages = new Map();
     console.log('Loading art for categories:', artEntries.map(([id]) => id));
@@ -988,6 +1271,14 @@ async function exportPng() {
             } catch (igdbError) {
                 console.warn(`Skipped art for category ${categoryId}:`, error.message, '| IGDB fallback failed:', igdbError.message);
             }
+        }
+    }));
+
+    await Promise.all(customArtEntries.map(async ([customId, imageUrl]) => {
+        try {
+            artImages.set(customId, await loadImage(imageUrl));
+        } catch (error) {
+            console.warn(`Skipped custom art for ${customId}:`, error.message);
         }
     }));
 
@@ -1144,7 +1435,7 @@ function renderDayCard(date, segments, timeZone) {
             const start = new Date(segment.start_time);
             const categoryId = segment.category?.id;
             const categoryName = segment.category?.name || 'Unknown';
-            const art = segment.resolvedArtUrl || (categoryId ? toBoxArtUrl(categoryId, 160, 214) : '');
+            const art = segment.customImageUrl || segment.resolvedArtUrl || (categoryId ? toBoxArtUrl(categoryId, 160, 214) : '');
             
             if (art) {
                 console.log(`📺 "${segment.title}" (${categoryName}):`, art);
@@ -1161,7 +1452,7 @@ function renderDayCard(date, segments, timeZone) {
 
             return `
                 <article class="segment">
-                    ${art ? `<div class="segment-art" style="background-image:url('${art}')"></div>` : ''}
+                    ${art ? `<div class="segment-art" style="background-image:url('${escapeCssUrl(art)}')"></div>` : ''}
                     <div class="segment-content">
                         <div class="segment-time">${timeLabel}</div>
                         <div class="segment-weekday">${weekdayLabel}</div>
@@ -1221,6 +1512,33 @@ function renderEmoteTile(emotes) {
     };
 }
 
+function renderEmoteTileWithCurrent(emotes, currentEmote = null) {
+    if (!currentEmote) return renderEmoteTile(emotes);
+    const alt = currentEmote.name || 'Channel emote';
+
+    return {
+        emote: currentEmote,
+        html: `
+        <button
+            class="emote-tile"
+            type="button"
+            data-emote-roll="true"
+            data-emote-id="${escapeHtml(currentEmote.id)}"
+            aria-label="Roll a random emote"
+            title="Click to roll a random emote"
+        >
+            <img
+                class="emote-image"
+                data-emote-image="true"
+                src="${escapeHtml(currentEmote.imageUrl)}"
+                alt="${escapeHtml(alt)}"
+                draggable="false"
+            >
+        </button>
+    `
+    };
+}
+
 function wireEmoteRoller(emotes) {
     const button = els.days.querySelector('[data-emote-roll="true"]');
     const image = els.days.querySelector('[data-emote-image="true"]');
@@ -1249,10 +1567,13 @@ function wireEmoteRoller(emotes) {
 }
 
 function renderBoard(segments, weekStart, timeZone, info, extras = {}) {
-    const grouped = groupSegmentsByDay(segments, timeZone);
+    const mergedSegments = mergeScheduleSegments(segments, weekStart, timeZone);
+    const grouped = groupSegmentsByDay(mergedSegments, timeZone);
     const days = [];
     const dayGroups = [];
-    const emoteTile = state.layout === 'horizontal' ? renderEmoteTile(extras.channelEmotes || []) : { html: '', emote: null };
+    const emoteTile = state.layout === 'horizontal'
+        ? renderEmoteTileWithCurrent(extras.channelEmotes || [], extras.currentEmote || null)
+        : { html: '', emote: null };
 
     for (let i = 0; i < 7; i += 1) {
         const day = new Date(weekStart.getTime() + i * 86400000);
@@ -1278,8 +1599,10 @@ function renderBoard(segments, weekStart, timeZone, info, extras = {}) {
     els.weekLabel.textContent = formatWeekLabel(weekStart, new Date(weekStart.getTime() + 7 * 86400000), timeZone);
     setBoardTitle();
     els.boardSubtitle.textContent = '';
+    syncCustomControls(weekStart, timeZone);
     state.currentBoard = {
-        segments,
+        segments: mergedSegments,
+        twitchSegments: segments,
         weekStart: new Date(weekStart.getTime()),
         timeZone,
         info: info || null,
@@ -1309,7 +1632,6 @@ function renderBoard(segments, weekStart, timeZone, info, extras = {}) {
 
 function updateWeekButtons() {
     const enabled = Boolean(state.accessToken && state.clientId);
-    els.weekOffsetSelect.disabled = !enabled;
     els.loadBtn.disabled = !enabled;
 }
 
@@ -1362,11 +1684,9 @@ async function loadSchedule() {
             channelEmotes
         });
     } catch (error) {
-        els.days.innerHTML = '';
-        els.weekLabel.textContent = 'Week label';
+        const weekStart = getActiveWeekStart();
+        renderBoard([], weekStart, state.timezone, null);
         setBoardTitle();
-        els.boardSubtitle.textContent = 'Pick a broadcaster and load a week.';
-        state.currentBoard = null;
         setMessage(error.message || 'Failed to load schedule.', 'error');
     }
 }
@@ -1381,12 +1701,15 @@ function wireEvents() {
     els.timezoneInput.addEventListener('change', () => {
         state.timezone = els.timezoneInput.value || Intl.DateTimeFormat().resolvedOptions().timeZone;
         saveState();
+        rerenderCurrentBoard();
     });
 
     els.weekOffsetSelect.addEventListener('change', () => {
         const nextOffset = Number(els.weekOffsetSelect.value);
         state.weekOffset = Number.isNaN(nextOffset) ? 0 : nextOffset;
         saveState();
+        const weekStart = getActiveWeekStart();
+        renderBoard([], weekStart, state.timezone, null);
     });
 
     els.connectBtn.addEventListener('click', connectTwitch);
@@ -1394,10 +1717,18 @@ function wireEvents() {
     els.verticalLayoutBtn.addEventListener('click', () => setLayout('vertical'));
     els.horizontalLayoutBtn.addEventListener('click', () => setLayout('horizontal'));
     els.exportPngBtn.addEventListener('click', exportPng);
+    els.addCustomItemBtn.addEventListener('click', addCustomItem);
+    els.customItemsList.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-remove-custom]');
+        if (!button) return;
+        removeCustomItem(button.dataset.removeCustom);
+    });
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && (event.target === els.broadcasterInput || event.target === els.timezoneInput)) {
             loadSchedule();
+        } else if (event.key === 'Enter' && event.target === els.customTitleInput) {
+            addCustomItem();
         }
     });
 }

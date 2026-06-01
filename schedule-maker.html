@@ -285,6 +285,72 @@
             outline-offset: 2px;
         }
 
+        .custom-items {
+            display: grid;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .custom-items h2 {
+            margin: 0;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .custom-grid {
+            display: grid;
+            grid-template-columns: minmax(130px, 0.8fr) minmax(120px, 0.6fr) minmax(180px, 1.4fr) minmax(180px, 1.4fr);
+            gap: 12px;
+            align-items: end;
+        }
+
+        .custom-grid .field input[type="file"] {
+            padding: 9px 10px;
+            font-size: 0.84rem;
+        }
+
+        .custom-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .custom-item-row {
+            display: grid;
+            grid-template-columns: 56px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .custom-thumb {
+            width: 56px;
+            aspect-ratio: 16 / 9;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(255,255,255,0.12);
+        }
+
+        .custom-row-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .custom-row-meta {
+            margin-top: 2px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.62);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
         .actions {
             display: flex;
             flex-wrap: wrap;
@@ -327,6 +393,10 @@
 
         .btn.secondary {
             background: rgba(255,255,255,0.11);
+        }
+
+        .btn.danger {
+            background: rgba(255, 110, 142, 0.28);
         }
 
         .btn:disabled {
@@ -724,6 +794,7 @@
 
         @media (max-width: 1100px) {
             .controls-grid { grid-template-columns: 1fr; }
+            .custom-grid { grid-template-columns: 1fr 1fr; }
             .board-wrap { width: min(330px, calc(100vw - 24px)); }
             .days { grid-template-columns: 1fr; }
             body.layout-horizontal .days { grid-template-columns: 1fr; }
@@ -735,6 +806,9 @@
             .shell { width: min(100vw - 12px, 1200px); margin: 6px auto; padding: 10px; border-radius: 20px; }
             .hero { padding: 18px; }
             .controls { padding: 14px; }
+            .custom-grid { grid-template-columns: 1fr; }
+            .custom-item-row { grid-template-columns: 48px 1fr auto; }
+            .custom-thumb { width: 48px; }
             .days { grid-template-columns: 1fr; }
             .day { min-height: 0; }
         }
@@ -757,6 +831,7 @@
         <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="schedule-maker.html">Schedule Maker</a></li>
+            <li><a href="checker-background.html">Checker Background Maker</a></li>
             <li><a href="https://itsmejoji.github.io/ShinyPokemonBingoGenerator/" target="_blank" rel="noopener noreferrer">Shiny Bingo Generator</a></li>
         </ul>
         <div class="menu-socials">
@@ -804,6 +879,32 @@
                         <button class="btn secondary" id="horizontalLayoutBtn" type="button">Horizontal</button>
                     </div>
                     <button class="btn secondary" id="exportPngBtn" type="button">Print PNG</button>
+                </div>
+
+                <div class="custom-items" aria-label="Manual schedule items">
+                    <h2>Manual Items</h2>
+                    <div class="custom-grid">
+                        <div class="field">
+                            <label for="customDayInput">Day</label>
+                            <select id="customDayInput" aria-label="Manual item day"></select>
+                        </div>
+                        <div class="field">
+                            <label for="customTimeInput">Time</label>
+                            <input id="customTimeInput" type="time" value="12:00" />
+                        </div>
+                        <div class="field">
+                            <label for="customTitleInput">Title</label>
+                            <input id="customTitleInput" type="text" placeholder="New video premiere" />
+                        </div>
+                        <div class="field">
+                            <label for="customImageInput">Image</label>
+                            <input id="customImageInput" type="file" accept="image/*" />
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn secondary" id="addCustomItemBtn" type="button">Add Item</button>
+                    </div>
+                    <div class="custom-list" id="customItemsList" aria-live="polite"></div>
                 </div>
 
                 <div class="message" id="message">Connect with Twitch, then load a broadcaster to render the week.</div>

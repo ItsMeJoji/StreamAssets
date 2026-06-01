@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checker Background Maker</title>
+    <link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
+    <style>
+        :root {
+            --page: #11131b;
+            --panel: #f6f2ea;
+            --panel-strong: #ffffff;
+            --ink: #202436;
+            --muted: #626979;
+            --line: rgba(32, 36, 54, 0.14);
+            --accent: #ef3f45;
+            --accent-2: #2f9f8f;
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; margin: 0; }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ink);
+            background:
+                linear-gradient(135deg, rgba(239, 63, 69, 0.20), transparent 34%),
+                linear-gradient(225deg, rgba(47, 159, 143, 0.22), transparent 30%),
+                #151722;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        #header {
+            width: min(1180px, calc(100vw - 24px));
+            margin: 12px auto 0;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255,255,255,0.68);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+            position: relative;
+            z-index: 1001;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        #header h1 a {
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+        #header nav ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .menuToggle {
+            color: var(--ink);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 8px 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(32, 36, 54, 0.07);
+        }
+
+        .menuToggle::after {
+            content: "\f0c9";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        #menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(360px, 88vw);
+            height: 100dvh;
+            background: #ffffff;
+            padding: 56px 30px 28px;
+            transform: translateX(100%);
+            transition: transform 260ms ease;
+            z-index: 1100;
+            overflow-y: auto;
+            border-left: 1px solid var(--line);
+            box-shadow: -22px 0 70px rgba(0, 0, 0, 0.26);
+        }
+
+        body.is-menu-visible #menu {
+            transform: translateX(0);
+        }
+
+        #menu ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #menu li {
+            border-top: 1px solid var(--line);
+        }
+
+        #menu li:first-child {
+            border-top: 0;
+        }
+
+        #menu a {
+            display: block;
+            color: var(--ink);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-size: 0.86rem;
+            font-weight: 800;
+            padding: 17px 0;
+        }
+
+        #menu .close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 8px;
+            background: rgba(32, 36, 54, 0.08);
+            color: var(--ink);
+            cursor: pointer;
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+
+        .menu-socials {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .menu-socials a {
+            display: inline-grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 8px;
+            background: rgba(32, 36, 54, 0.08);
+            font-size: 1rem;
+        }
+
+        #menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.38);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 260ms ease;
+            z-index: 1090;
+        }
+
+        body.is-menu-visible #menu-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .shell {
+            width: min(1180px, calc(100vw - 24px));
+            margin: 12px auto 32px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .panel,
+        .stage {
+            border-radius: 8px;
+            background: var(--panel);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            box-shadow: var(--shadow);
+        }
+
+        .panel {
+            padding: 18px;
+            display: grid;
+            gap: 16px;
+            align-content: start;
+            grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr) minmax(240px, 0.85fr);
+            align-items: start;
+        }
+
+        .title-block,
+        .drop-zone,
+        .asset-strip,
+        .message {
+            min-width: 0;
+        }
+
+        .control-group {
+            min-width: 0;
+        }
+
+        .title-block {
+            display: grid;
+            gap: 8px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 0.74rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            line-height: 0.9;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            font-weight: 900;
+            font-family: "Arial Black", "Segoe UI Black", Impact, system-ui, sans-serif;
+        }
+
+        .lede {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 0.94rem;
+        }
+
+        .drop-zone {
+            min-height: 144px;
+            display: grid;
+            place-items: center;
+            gap: 10px;
+            padding: 18px;
+            border: 2px dashed rgba(32, 36, 54, 0.24);
+            border-radius: 8px;
+            background: var(--panel-strong);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 160ms ease, transform 160ms ease;
+        }
+
+        .drop-zone.dragging {
+            border-color: var(--accent-2);
+            transform: translateY(-1px);
+        }
+
+        .drop-zone i {
+            font-size: 1.6rem;
+            color: var(--accent-2);
+        }
+
+        .drop-zone strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .drop-zone span {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .drop-zone input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .control-group {
+            display: grid;
+            gap: 12px;
+            padding-top: 2px;
+            grid-column: 2;
+            grid-row: 1 / span 3;
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 0.74rem;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        input[type="number"],
+        input[type="color"],
+        input[type="range"] {
+            width: 100%;
+        }
+
+        input[type="number"] {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 11px;
+            background: var(--panel-strong);
+            color: var(--ink);
+        }
+
+        input[type="color"] {
+            height: 42px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 4px;
+            background: var(--panel-strong);
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            accent-color: var(--accent);
+        }
+
+        .range-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .range-value {
+            color: var(--ink);
+            font-size: 0.74rem;
+            font-weight: 900;
+        }
+
+        .toggle-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 36px;
+            color: var(--ink);
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .toggle-line input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-2);
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            grid-column: 1;
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            border-radius: 8px;
+            min-height: 43px;
+            padding: 11px 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #fff;
+            background: var(--ink);
+            font-weight: 900;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn.primary {
+            background: var(--accent);
+        }
+
+        .btn.secondary {
+            background: var(--accent-2);
+        }
+
+        .btn:disabled {
+            opacity: 0.48;
+            cursor: not-allowed;
+        }
+
+        .asset-strip {
+            display: grid;
+            gap: 8px;
+            grid-column: 3;
+            grid-row: 1 / span 4;
+        }
+
+        .asset-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+            gap: 8px;
+            min-height: 46px;
+        }
+
+        .asset-thumb {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .asset-thumb img {
+            max-width: 86%;
+            max-height: 86%;
+            object-fit: contain;
+        }
+
+        .asset-empty,
+        .message {
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+
+        .message.error {
+            color: #b3262d;
+        }
+
+        .stage {
+            position: sticky;
+            top: 10px;
+            z-index: 20;
+            min-height: 0;
+            padding: 16px;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 12px;
+            background: #252836;
+        }
+
+        .stage-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.86);
+        }
+
+        .stage-head strong {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .canvas-meta {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.86rem;
+        }
+
+        .canvas-wrap {
+            min-height: 260px;
+            max-height: min(72dvh, 820px);
+            display: grid;
+            align-items: start;
+            justify-items: center;
+            overflow: auto;
+            border-radius: 8px;
+            background: #151925;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            background: #fff;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+            image-rendering: auto;
+        }
+
+        @media (max-width: 980px) {
+            .stage {
+                top: 6px;
+            }
+
+            .panel {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .title-block,
+            .drop-zone,
+            .asset-strip,
+            .message,
+            .control-group,
+            .actions {
+                grid-column: 1 / -1;
+                grid-row: auto;
+            }
+        }
+
+        @media (max-width: 620px) {
+            #header h1 {
+                display: none;
+            }
+
+            .shell {
+                width: min(100vw - 12px, 1180px);
+                margin-top: 6px;
+            }
+
+            .field-row,
+            .actions,
+            .panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <h1><a href="index.html">Stream Assets by ItsMeJoji</a></h1>
+        <nav id="nav">
+            <ul>
+                <li class="special">
+                    <a href="#menu" class="menuToggle"><span>Menu</span></a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <nav id="menu" aria-label="Site menu">
+        <button class="close" type="button" aria-label="Close menu">&times;</button>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="schedule-maker.html">Schedule Maker</a></li>
+            <li><a href="checker-background.html">Checker Background Maker</a></li>
+            <li><a href="https://itsmejoji.github.io/ShinyPokemonBingoGenerator/" target="_blank" rel="noopener noreferrer">Shiny Bingo Generator</a></li>
+        </ul>
+        <div class="menu-socials">
+            <a href="https://bsky.app/profile/itsmejoji.com" class="fa-brands fa-bluesky" aria-label="Bluesky"></a>
+            <a href="https://www.youtube.com/c/itsmejoji" class="fa-brands fa-youtube" aria-label="YouTube"></a>
+            <a href="https://www.twitch.tv/itsmejoji/" class="fa-brands fa-twitch" aria-label="Twitch"></a>
+        </div>
+    </nav>
+    <div id="menu-overlay" aria-hidden="true"></div>
+
+    <main class="shell">
+        <section class="stage" aria-label="Checker background preview">
+            <div class="stage-head">
+                <strong>Preview</strong>
+                <span class="canvas-meta" id="canvasMeta">615 x 426</span>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="checkerCanvas" width="615" height="426"></canvas>
+            </div>
+        </section>
+
+        <aside class="panel">
+            <div class="title-block">
+                <div class="eyebrow">Image tile tool</div>
+                <h2>Checker Background</h2>
+                <p class="lede">Drop in transparent icons, emotes, badges, or sprites and roll them into a tidy randomized layout.</p>
+            </div>
+
+            <label class="drop-zone" id="dropZone" for="imageInput">
+                <input id="imageInput" type="file" accept="image/*" multiple />
+                <i class="fa-solid fa-images" aria-hidden="true"></i>
+                <span>
+                    <strong>Choose or drop image files</strong>
+                    PNG, WebP, JPG, GIF, and SVG all work.
+                </span>
+            </label>
+
+            <div class="control-group">
+                <div class="field-row">
+                    <div class="field">
+                        <label for="canvasWidth">Width</label>
+                        <input id="canvasWidth" type="number" min="128" max="4096" step="1" value="615" />
+                    </div>
+                    <div class="field">
+                        <label for="canvasHeight">Height</label>
+                        <input id="canvasHeight" type="number" min="128" max="4096" step="1" value="426" />
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="columnCount">Columns</label>
+                        <input id="columnCount" type="number" min="1" max="24" step="1" value="8" />
+                    </div>
+                    <div class="field">
+                        <label for="rowCount">Rows</label>
+                        <input id="rowCount" type="number" min="1" max="24" step="1" value="5" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="backgroundColor">Background Color</label>
+                    <input id="backgroundColor" type="color" value="#ffffff" />
+                </div>
+
+                <div class="field">
+                    <div class="range-head">
+                        <label for="imageScale">Image Size</label>
+                        <span class="range-value" id="imageScaleValue">78%</span>
+                    </div>
+                    <input id="imageScale" type="range" min="30" max="115" step="1" value="78" />
+                </div>
+
+                <div class="field">
+                    <div class="range-head">
+                        <label for="jitterAmount">Position Jitter</label>
+                        <span class="range-value" id="jitterAmountValue">14%</span>
+                    </div>
+                    <input id="jitterAmount" type="range" min="0" max="45" step="1" value="14" />
+                </div>
+
+                <div class="field">
+                    <div class="range-head">
+                        <label for="rotationAmount">Rotation</label>
+                        <span class="range-value" id="rotationAmountValue">0°</span>
+                    </div>
+                    <input id="rotationAmount" type="range" min="0" max="35" step="1" value="0" />
+                </div>
+
+                <label class="toggle-line">
+                    <input id="allowRepeats" type="checkbox" checked />
+                    Allow repeated images
+                </label>
+            </div>
+
+            <div class="actions">
+                <button class="btn secondary" id="randomizeBtn" type="button">
+                    <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
+                    Randomize
+                </button>
+                <button class="btn primary" id="downloadBtn" type="button" disabled>
+                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    PNG
+                </button>
+                <button class="btn" id="clearBtn" type="button">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    Clear
+                </button>
+            </div>
+
+            <div class="asset-strip">
+                <label>Loaded Images</label>
+                <div class="asset-list" id="assetList">
+                    <div class="asset-empty">No images loaded yet.</div>
+                </div>
+            </div>
+
+            <div class="message" id="message">Add a few images, then randomize the tile positions.</div>
+        </aside>
+    </main>
+
+    <script type="module" src="assets/js/checker-background.js"></script>
+    <script>
+        (() => {
+            const body = document.body;
+            const toggle = document.querySelector('.menuToggle');
+            const menu = document.getElementById('menu');
+            const closeButton = menu?.querySelector('.close');
+            const overlay = document.getElementById('menu-overlay');
+
+            const closeMenu = () => body.classList.remove('is-menu-visible');
+            const openMenu = () => body.classList.add('is-menu-visible');
+
+            toggle?.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (body.classList.contains('is-menu-visible')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+
+            closeButton?.addEventListener('click', closeMenu);
+            overlay?.addEventListener('click', closeMenu);
+            menu?.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', closeMenu);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeMenu();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
