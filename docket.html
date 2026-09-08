@@ -3,48 +3,799 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Docket</title>
-    <link rel="stylesheet" href="assets/css/main.css" />
+    <title>Stream Weekly Docket</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
-    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+    <style>
+        :root {
+            --bg-color: #0b0914;
+            --panel-bg: rgba(18, 15, 38, 0.75);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f5f7ff;
+            --text-muted: rgba(245, 247, 255, 0.65);
+            --accent-purple: #b993ff;
+            --accent-cyan: #66d9ff;
+            --accent-pink: #ff7ebb;
+            --accent-green: #00f2fe;
+            --row-bg: rgba(255, 255, 255, 0.04);
+            --row-hover: rgba(255, 255, 255, 0.08);
+            --row-active: rgba(185, 147, 255, 0.14);
+            --badge-bg: rgba(185, 147, 255, 0.18);
+            --badge-text: #d8c2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(185, 147, 255, 0.15), transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(102, 217, 255, 0.12), transparent 35%),
+                linear-gradient(180deg, #130f28 0%, #0b0914 100%);
+            background-attachment: fixed;
+        }
+
+        body.transparent-mode {
+            background: transparent !important;
+            background-image: none !important;
+            padding: 12px;
+        }
+
+        .docket-card {
+            width: 100%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(185, 147, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        body.transparent-mode .docket-card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .docket-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--panel-border);
+            background: linear-gradient(135deg, rgba(185, 147, 255, 0.12), rgba(102, 217, 255, 0.05));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .docket-header.hidden {
+            display: none !important;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            display: grid;
+            place-items: center;
+            color: #0d0a21;
+            font-size: 1.25rem;
+            box-shadow: 0 6px 16px rgba(185, 147, 255, 0.3);
+        }
+
+        .docket-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .docket-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .toggle-btn {
+            background: rgba(185, 147, 255, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(185, 147, 255, 0.3);
+        }
+
+        .toggle-btn:hover {
+            background: rgba(185, 147, 255, 0.25);
+        }
+
+        .week-range-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(102, 217, 255, 0.12);
+            border: 1px solid rgba(102, 217, 255, 0.25);
+            color: var(--accent-cyan);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .docket-body {
+            padding: 20px 24px 28px;
+        }
+
+        .docket-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .docket-table th {
+            text-align: left;
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .docket-row {
+            background: var(--row-bg);
+            border-radius: 16px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .docket-row:hover {
+            background: var(--row-hover);
+            transform: scale(1.008);
+        }
+
+        .docket-row.today {
+            background: linear-gradient(90deg, rgba(185, 147, 255, 0.15), rgba(18, 15, 38, 0.6));
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .docket-row.is-live {
+            background: linear-gradient(90deg, rgba(255, 75, 75, 0.2), rgba(18, 15, 38, 0.6));
+            border-left: 4px solid #ff4b4b;
+            animation: pulse-live 2s infinite;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 75, 75, 0.2); }
+            50% { box-shadow: 0 0 24px rgba(255, 75, 75, 0.4); }
+        }
+
+        .docket-td {
+            padding: 16px 18px;
+            vertical-align: middle;
+        }
+
+        .docket-td:first-child {
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+
+        .docket-td:last-child {
+            border-top-right-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        .day-date-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 130px;
+        }
+
+        .day-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-sub {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .time-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+        }
+
+        .time-box i {
+            color: var(--accent-cyan);
+            font-size: 0.8rem;
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border: 1px solid rgba(185, 147, 255, 0.25);
+            white-space: nowrap;
+        }
+
+        .title-text {
+            font-size: 0.96rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.35;
+        }
+
+        .status-tag {
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .tag-today {
+            background: var(--accent-purple);
+            color: #0b0914;
+        }
+
+        .tag-live {
+            background: #ff4b4b;
+            color: #ffffff;
+        }
+
+        .tag-off {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+        }
+
+        .empty-day-row {
+            opacity: 0.55;
+        }
+
+        .empty-day-row:hover {
+            opacity: 0.85;
+        }
+
+        .empty-text {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .loading-state, .error-state {
+            padding: 48px 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(185, 147, 255, 0.2);
+            border-top-color: var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-state i {
+            font-size: 2.5rem;
+            color: #ff6b8b;
+        }
+
+        .footer-bar {
+            padding: 14px 28px;
+            border-top: 1px solid var(--panel-border);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .footer-bar.hidden {
+            display: none !important;
+        }
+
+        .footer-bar a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .footer-bar a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 680px) {
+            body { padding: 10px; }
+            .docket-header { padding: 18px; }
+            .docket-body { padding: 14px; }
+            .docket-table th:nth-child(2),
+            .docket-td:nth-child(2) {
+                display: none; /* Hide time column on very small mobile views if needed */
+            }
+            .day-date-box { min-width: 100px; }
+            .docket-title { font-size: 1.3rem; }
+        }
+    </style>
 </head>
-<body style="padding: 20px;">
-    <h1>Stream Docket</h1>
-    <div id="docket-container" style="border: 1px solid;">Loading schedule...</div>
+<body>
+
+    <div class="docket-card" id="docketCard">
+        <!-- Header -->
+        <header class="docket-header" id="docketHeader">
+            <div class="header-title-group">
+                <div class="header-icon">
+                    <i class="fa-solid fa-calendar-week"></i>
+                </div>
+                <div>
+                    <h1 class="docket-title">Stream Docket</h1>
+                    <div class="docket-subtitle">
+                        <span id="broadcasterName">Twitch Schedule</span>
+                        <span>•</span>
+                        <span class="week-range-badge" id="weekRangeBadge">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-group">
+                <button class="nav-btn" id="prevWeekBtn" title="Previous Week">
+                    <i class="fa-solid fa-chevron-left"></i> Prev
+                </button>
+                <button class="nav-btn" id="todayWeekBtn" title="Current Week">
+                    Today
+                </button>
+                <button class="nav-btn" id="nextWeekBtn" title="Next Week">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <button class="nav-btn toggle-btn" id="obsToggleBtn" title="Toggle OBS Mode">
+                    <i class="fa-solid fa-tv"></i> OBS Mode
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="docket-body">
+            <div id="docketContent">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Fetching Twitch schedule...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer-bar" id="docketFooter">
+            <div>Auto-refreshes every 5 mins</div>
+            <div>
+                <a href="#" id="refreshLink"><i class="fa-solid fa-rotate-right"></i> Refresh Now</a>
+            </div>
+        </footer>
+    </div>
 
     <script>
-        // REPLACE THE URL BELOW with your "Published to Web" CSV link
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT8OBGqnDQoznslLTWZyBcysxWijxoTHZMUhVCySH1FlbGNRxW_0z00R5o2GBMUSq-LxoWv_GTKe6g7/pub?gid=0&single=true&output=csv';
+        // Parameters & Options
+        const urlParams = new URLSearchParams(window.location.search);
+        const broadcasterId = urlParams.get('broadcaster_id') || urlParams.get('id') || '68184174';
+        const customUrl = urlParams.get('url') || urlParams.get('ical');
+        const transparentMode = urlParams.get('transparent') === 'true' || urlParams.get('obs') === 'true';
+        const hideHeaderParam = urlParams.get('hideHeader') === 'true';
 
-        async function loadDocket() {
-            try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1); // Skip the header row
-                
-                let html = '<table><tr><th><u>Item</u></th><th><u>Game</u></th><th><u>Description</u></th></tr>';
-                
-                rows.forEach(row => {
-                    const columns = row.split(',');
-                    if (columns.length >= 3) {
-                        html += `<tr>
-                            <td>${columns[0]}</td>
-                            <td>${columns[1]}</td>
-                            <td>${columns[2]}</td>
-                        </tr>`;
+        // Default iCal URL
+        let iCalUrl = customUrl ? customUrl : `https://api.twitch.tv/helix/schedule/icalendar?broadcaster_id=${broadcasterId}`;
+        // Ensure webcal:// protocol is converted to https://
+        iCalUrl = iCalUrl.replace(/^webcal:\/\//i, 'https://');
+
+        let weekOffset = parseInt(urlParams.get('weekOffset') || '0', 10);
+        let parsedEvents = [];
+        let broadcasterTitleName = 'ItsMeJoji';
+
+        // Apply transparent / OBS mode if configured
+        if (transparentMode) {
+            document.body.classList.add('transparent-mode');
+        }
+        if (hideHeaderParam) {
+            document.getElementById('docketHeader').classList.add('hidden');
+            document.getElementById('docketFooter').classList.add('hidden');
+        }
+
+        // Setup Event Listeners
+        document.getElementById('prevWeekBtn').addEventListener('click', () => { weekOffset--; renderDocket(); });
+        document.getElementById('nextWeekBtn').addEventListener('click', () => { weekOffset++; renderDocket(); });
+        document.getElementById('todayWeekBtn').addEventListener('click', () => { weekOffset = 0; renderDocket(); });
+        document.getElementById('obsToggleBtn').addEventListener('click', () => {
+            document.body.classList.toggle('transparent-mode');
+        });
+        document.getElementById('refreshLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            loadSchedule();
+        });
+
+        // Parse iCal helper
+        function parseICal(text) {
+            const unfolded = text.replace(/\r?\n[ \t]/g, '');
+            const lines = unfolded.split(/\r?\n/);
+            const events = [];
+            let currentEvent = null;
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('X-WR-CALNAME:')) {
+                    broadcasterTitleName = line.substring(13).trim();
+                }
+                if (line === 'BEGIN:VEVENT') {
+                    currentEvent = {};
+                } else if (line === 'END:VEVENT') {
+                    if (currentEvent && currentEvent.dtstart) {
+                        events.push(currentEvent);
                     }
-                });
-                
-                html += '</table>';
-                document.getElementById('docket-container').innerHTML = html;
-            } catch (error) {
-                document.getElementById('docket-container').innerHTML = "Failed to load docket.";
+                    currentEvent = null;
+                } else if (currentEvent) {
+                    const colonIdx = line.indexOf(':');
+                    if (colonIdx !== -1) {
+                        const keyPart = line.substring(0, colonIdx);
+                        const value = line.substring(colonIdx + 1);
+                        const keySubparts = keyPart.split(';');
+                        const propName = keySubparts[0];
+                        const params = {};
+                        for (let i = 1; i < keySubparts.length; i++) {
+                            const [pName, pVal] = keySubparts[i].split('=');
+                            if (pName && pVal) params[pName] = pVal;
+                        }
+
+                        if (propName === 'DTSTART') {
+                            currentEvent.dtstart = parseICalDate(value, params.TZID);
+                        } else if (propName === 'DTEND') {
+                            currentEvent.dtend = parseICalDate(value, params.TZID);
+                        } else if (propName === 'SUMMARY') {
+                            currentEvent.title = unescapeICal(value);
+                        } else if (propName === 'CATEGORIES' || propName === 'DESCRIPTION') {
+                            const val = unescapeICal(value);
+                            if (!currentEvent.category || propName === 'CATEGORIES') {
+                                currentEvent.category = val;
+                            }
+                        }
+                    }
+                }
+            }
+            return events;
+        }
+
+        function unescapeICal(str) {
+            return str.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\').replace(/\\n/gi, ' ');
+        }
+
+        function parseICalDate(dateStr, tzid) {
+            const match = dateStr.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/);
+            if (!match) return new Date(dateStr);
+
+            const [_, y, m, d, h, min, s, isUtc] = match;
+            const year = parseInt(y, 10);
+            const month = parseInt(m, 10) - 1;
+            const day = parseInt(d, 10);
+            const hour = parseInt(h, 10);
+            const minute = parseInt(min, 10);
+            const second = parseInt(s, 10);
+
+            if (isUtc) {
+                return new Date(Date.UTC(year, month, day, hour, minute, second));
+            }
+
+            if (tzid) {
+                const cleanTzid = tzid.replace(/^\//, '');
+                try {
+                    const targetDate = new Date(Date.UTC(year, month, day, hour, minute, second));
+                    const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: cleanTzid,
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        hour12: false
+                    });
+                    const parts = formatter.formatToParts(targetDate);
+                    const p = {};
+                    parts.forEach(part => p[part.type] = part.value);
+                    const formattedAsUtc = new Date(Date.UTC(
+                        parseInt(p.year, 10),
+                        parseInt(p.month, 10) - 1,
+                        parseInt(p.day, 10),
+                        parseInt(p.hour === '24' ? '0' : p.hour, 10),
+                        parseInt(p.minute, 10),
+                        parseInt(p.second, 10)
+                    ));
+                    const offsetMs = targetDate.getTime() - formattedAsUtc.getTime();
+                    return new Date(targetDate.getTime() + offsetMs);
+                } catch (e) {
+                    console.warn('TZ parser fallback', e);
+                }
+            }
+
+            return new Date(year, month, day, hour, minute, second);
+        }
+
+        // Fetch Schedule Data with Proxy Fallback if CORS blocked
+        async function loadSchedule() {
+            const container = document.getElementById('docketContent');
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Fetching Twitch schedule...</p>
+                </div>`;
+
+            let icalText = null;
+
+            // Try direct fetch first
+            try {
+                const res = await fetch(iCalUrl);
+                if (res.ok) {
+                    icalText = await res.text();
+                }
+            } catch (err) {
+                console.warn("Direct fetch failed or CORS blocked. Attempting proxy fallback...", err);
+            }
+
+            // Fallback to CORS proxy if direct fetch failed
+            if (!icalText) {
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(iCalUrl)}`;
+                    const res = await fetch(proxyUrl);
+                    if (res.ok) {
+                        icalText = await res.text();
+                    }
+                } catch (err) {
+                    console.warn("Primary proxy failed, trying secondary proxy...", err);
+                }
+            }
+
+            if (!icalText) {
+                try {
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(iCalUrl)}`;
+                    const res = await fetch(proxyUrl);
+                    if (res.ok) {
+                        icalText = await res.text();
+                    }
+                } catch (err) {
+                    console.error("All fetch attempts failed.", err);
+                }
+            }
+
+            if (icalText) {
+                parsedEvents = parseICal(icalText);
+                if (broadcasterTitleName) {
+                    document.getElementById('broadcasterName').textContent = `${broadcasterTitleName}'s Schedule`;
+                }
+                renderDocket();
+            } else {
+                container.innerHTML = `
+                    <div class="error-state">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <h3>Unable to load stream schedule</h3>
+                        <p>Please check your internet connection or verify the broadcaster ID.</p>
+                        <button class="nav-btn" onclick="loadSchedule()"><i class="fa-solid fa-rotate-right"></i> Retry</button>
+                    </div>`;
             }
         }
 
-        loadDocket();
-        // Refresh every 60 seconds automatically
-        setInterval(loadDocket, 20000);
+        // Render Docket for the Selected Week
+        function renderDocket() {
+            const container = document.getElementById('docketContent');
+            const now = new Date();
+
+            // Calculate start of current target week (Sunday)
+            const baseDate = new Date(now);
+            baseDate.setDate(baseDate.getDate() + (weekOffset * 7));
+            const currentDayOfWeek = baseDate.getDay(); // 0 = Sunday
+            
+            const startOfWeek = new Date(baseDate);
+            startOfWeek.setDate(baseDate.getDate() - currentDayOfWeek);
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            // Date formatters
+            const monthDayFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+            const dayNameFmt = new Intl.DateTimeFormat('en-US', { weekday: 'long' });
+            const timeFmt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+            document.getElementById('weekRangeBadge').textContent = 
+                `${monthDayFmt.format(startOfWeek)} - ${monthDayFmt.format(endOfWeek)}`;
+
+            // Build list of all 7 days in the week
+            const weekDays = [];
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(startOfWeek);
+                dayDate.setDate(startOfWeek.getDate() + i);
+                weekDays.push(dayDate);
+            }
+
+            let html = `
+                <table class="docket-table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Category</th>
+                            <th>Stream Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            let hasAnyEvents = false;
+
+            weekDays.forEach(dayDate => {
+                const isToday = dayDate.toDateString() === now.toDateString();
+                const dayEvents = parsedEvents.filter(ev => {
+                    const st = new Date(ev.dtstart);
+                    return st.toDateString() === dayDate.toDateString();
+                });
+
+                if (dayEvents.length > 0) {
+                    hasAnyEvents = true;
+                    dayEvents.forEach(ev => {
+                        const startTimeStr = timeFmt.format(new Date(ev.dtstart));
+                        const endTimeStr = ev.dtend ? timeFmt.format(new Date(ev.dtend)) : '';
+                        const timeRange = endTimeStr ? `${startTimeStr} - ${endTimeStr}` : startTimeStr;
+
+                        const isLive = now >= new Date(ev.dtstart) && now <= new Date(ev.dtend);
+
+                        let rowClasses = 'docket-row';
+                        if (isLive) rowClasses += ' is-live';
+                        else if (isToday) rowClasses += ' today';
+
+                        let statusBadge = '';
+                        if (isLive) statusBadge = `<span class="status-tag tag-live">LIVE</span>`;
+                        else if (isToday) statusBadge = `<span class="status-tag tag-today">TODAY</span>`;
+
+                        html += `
+                            <tr class="${rowClasses}">
+                                <td class="docket-td">
+                                    <div class="day-date-box">
+                                        <div class="day-name">${dayNameFmt.format(dayDate)} ${statusBadge}</div>
+                                        <div class="date-sub">${monthDayFmt.format(dayDate)}</div>
+                                    </div>
+                                </td>
+                                <td class="docket-td">
+                                    <div class="time-box">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <span>${timeRange}</span>
+                                    </div>
+                                </td>
+                                <td class="docket-td">
+                                    <span class="category-badge">
+                                        <i class="fa-solid fa-gamepad"></i>
+                                        ${ev.category || 'Stream'}
+                                    </span>
+                                </td>
+                                <td class="docket-td">
+                                    <div class="title-text">${ev.title || 'Untitled Stream'}</div>
+                                </td>
+                            </tr>`;
+                    });
+                } else {
+                    let rowClasses = 'docket-row empty-day-row';
+                    if (isToday) rowClasses += ' today';
+
+                    let statusBadge = isToday ? `<span class="status-tag tag-today">TODAY</span>` : '';
+
+                    html += `
+                        <tr class="${rowClasses}">
+                            <td class="docket-td">
+                                <div class="day-date-box">
+                                    <div class="day-name">${dayNameFmt.format(dayDate)} ${statusBadge}</div>
+                                    <div class="date-sub">${monthDayFmt.format(dayDate)}</div>
+                                </div>
+                            </td>
+                            <td class="docket-td">
+                                <span class="empty-text">—</span>
+                            </td>
+                            <td class="docket-td">
+                                <span class="status-tag tag-off">OFF DAY</span>
+                            </td>
+                            <td class="docket-td">
+                                <span class="empty-text">No stream scheduled</span>
+                            </td>
+                        </tr>`;
+                }
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // Initial Load & Auto-Refresh every 5 minutes
+        loadSchedule();
+        setInterval(loadSchedule, 300000);
     </script>
 </body>
 </html>

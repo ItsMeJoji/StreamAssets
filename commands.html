@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stream Commands - Stream Assets by ItsMeJoji</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fontawesome-free-6.7.2-web/css/all.css" />
+    <style>
+        :root {
+            --bg-color: #0b0914;
+            --panel-bg: rgba(18, 15, 38, 0.76);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f5f7ff;
+            --text-muted: rgba(245, 247, 255, 0.68);
+            --accent-purple: #b993ff;
+            --accent-cyan: #66d9ff;
+            --accent-pink: #ff7ebb;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.08);
+            --code-bg: rgba(185, 147, 255, 0.14);
+            --code-border: rgba(185, 147, 255, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 12% 12%, rgba(185, 147, 255, 0.18), transparent 32%),
+                radial-gradient(circle at 88% 88%, rgba(102, 217, 255, 0.14), transparent 32%),
+                linear-gradient(180deg, #161131 0%, #0b0914 100%);
+            background-attachment: fixed;
+            padding-bottom: 40px;
+        }
+
+        /* Navigation Header */
+        #header {
+            width: min(1120px, calc(100vw - 24px));
+            margin: 12px auto 0;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-radius: 16px;
+            background: rgba(17, 18, 52, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 1001;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 0.8rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        #header h1 a {
+            color: rgba(255, 255, 255, 0.95);
+            text-decoration: none;
+        }
+
+        #header nav > ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .menuToggle {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            transition: background 0.2s ease;
+        }
+
+        .menuToggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menuToggle::after {
+            content: "\f0c9";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+        }
+
+        #menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(360px, 88vw);
+            height: 100dvh;
+            background: linear-gradient(180deg, rgba(126, 113, 200, 0.98) 0%, rgba(76, 59, 175, 0.99) 52%, rgba(18, 0, 161, 1) 100%);
+            padding: 56px 30px 28px;
+            transform: translateX(100%);
+            transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 1100;
+            overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        body.is-menu-visible #menu {
+            transform: translateX(0);
+        }
+
+        #menu ul {
+            list-style: none;
+        }
+
+        #menu ul > li {
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        #menu ul > li:first-child {
+            border-top: 0;
+        }
+
+        #menu ul > li > a {
+            display: block;
+            color: rgba(255, 255, 255, 0.96);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            font-size: 0.88rem;
+            padding: 18px 0;
+            font-weight: 700;
+        }
+
+        #menu .close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.95);
+            cursor: pointer;
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+
+        .menu-socials {
+            margin-top: 20px;
+            display: flex;
+            gap: 14px;
+        }
+
+        .menu-socials a {
+            color: rgba(255, 255, 255, 0.95);
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+
+        #menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 1090;
+        }
+
+        body.is-menu-visible #menu-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Container Shell */
+        .shell {
+            width: min(1120px, calc(100vw - 24px));
+            margin: 16px auto;
+            padding: 24px;
+            border-radius: 28px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px);
+        }
+
+        /* Hero Banner */
+        .hero {
+            padding: 32px 28px;
+            border-radius: 22px;
+            background: linear-gradient(160deg, rgba(165, 142, 236, 0.88), rgba(58, 55, 182, 0.92) 50%, rgba(11, 7, 63, 0.96));
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .eyebrow {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .hero-copy {
+            max-width: 62ch;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.98rem;
+            line-height: 1.55;
+        }
+
+        /* Search & Filter Controls */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border-radius: 14px;
+            border: 1px solid var(--panel-border);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+            font-size: 0.92rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-purple);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 16px rgba(185, 147, 255, 0.2);
+        }
+
+        .category-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill-btn {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pill-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+        }
+
+        .pill-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            color: #0b0914;
+            border-color: transparent;
+            box-shadow: 0 6px 18px rgba(185, 147, 255, 0.25);
+        }
+
+        /* Command Sections & Cards */
+        .section-block {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(185, 147, 255, 0.16);
+            color: var(--accent-purple);
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .section-count {
+            margin-left: auto;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .commands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 14px;
+        }
+
+        .command-card {
+            background: var(--card-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .command-card:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            border-color: rgba(185, 147, 255, 0.3);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .command-trigger {
+            font-family: monospace, 'Courier New', Courier;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            padding: 6px 12px;
+            border-radius: 10px;
+            word-break: break-all;
+            display: inline-block;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-purple);
+            color: #0b0914;
+            border-color: transparent;
+        }
+
+        .copy-btn.copied {
+            background: #00f2fe !important;
+            color: #0b0914 !important;
+        }
+
+        .command-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.45;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .meta-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-param {
+            background: rgba(102, 217, 255, 0.14);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(102, 217, 255, 0.25);
+        }
+
+        .tag-cooldown {
+            background: rgba(255, 126, 187, 0.14);
+            color: var(--accent-pink);
+            border: 1px solid rgba(255, 126, 187, 0.25);
+        }
+
+        .tag-overlay {
+            background: rgba(185, 147, 255, 0.14);
+            color: var(--accent-purple);
+            border: 1px solid rgba(185, 147, 255, 0.25);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .no-results i {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            color: var(--accent-purple);
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 600px) {
+            .shell { padding: 16px; margin: 10px auto; }
+            .hero { padding: 20px 16px; }
+            .commands-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header id="header">
+        <h1><a href="index.html">Stream Assets by ItsMeJoji</a></h1>
+        <nav id="nav">
+            <ul>
+                <li class="special">
+                    <a href="#menu" class="menuToggle"><span>Menu</span></a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Slide-out Menu -->
+    <nav id="menu" aria-label="Site menu">
+        <button class="close" type="button" aria-label="Close menu">&times;</button>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="commands.html">Stream Commands</a></li>
+            <li><a href="docket.html">Stream Docket</a></li>
+            <li><a href="schedule-maker.html">Schedule Maker</a></li>
+            <li><a href="checker-background.html">Checker Background Maker</a></li>
+            <li><a href="https://itsmejoji.github.io/ShinyPokemonBingoGenerator/" target="_blank" rel="noopener noreferrer">Shiny Bingo Generator</a></li>
+        </ul>
+        <div class="menu-socials">
+            <a href="https://bsky.app/profile/itsmejoji.com" class="fa-brands fa-bluesky" aria-label="Bluesky"></a>
+            <a href="https://www.youtube.com/c/itsmejoji" class="fa-brands fa-youtube" aria-label="YouTube"></a>
+            <a href="https://www.twitch.tv/itsmejoji/" class="fa-brands fa-twitch" aria-label="Twitch"></a>
+        </div>
+    </nav>
+    <div id="menu-overlay" aria-hidden="true"></div>
+
+    <!-- Main Container -->
+    <main class="shell">
+        <section class="hero">
+            <div class="eyebrow">Twitch Chat & Bot Reference</div>
+            <h2>Stream Commands</h2>
+            <p class="hero-copy">
+                Explore all active chat commands available for ItsMeJoji's Twitch stream, chat bot triggers, and interactive overlays.
+            </p>
+        </section>
+
+        <!-- Filter & Search Bar -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search commands (e.g. !lurk, clip, pokemon)..." />
+            </div>
+
+            <div class="category-pills">
+                <button class="pill-btn active" data-category="all">All Commands</button>
+                <button class="pill-btn" data-category="general">General Commands</button>
+                <button class="pill-btn" data-category="overlay">Friendship Checker</button>
+            </div>
+        </div>
+
+        <!-- Commands Container -->
+        <div id="commandsContainer">
+
+            <!-- General Commands Section -->
+            <section class="section-block" data-section="general">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fa-solid fa-terminal"></i>
+                    </div>
+                    <h3 class="section-title">General Commands</h3>
+                    <span class="section-count">7 commands</span>
+                </div>
+
+                <div class="commands-grid">
+                    <!-- !porygonbot -->
+                    <div class="command-card" data-command="!porygonbot" data-keywords="porygonbot bot intro about info">
+                        <div class="card-top">
+                            <span class="command-trigger">!porygonbot</span>
+                            <button class="copy-btn" data-copy="!porygonbot" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Prints a short bot introduction in chat.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">Bot Info</span>
+                        </div>
+                    </div>
+
+                    <!-- !lurk -->
+                    <div class="command-card" data-command="!lurk" data-keywords="lurk afk lurking away stream">
+                        <div class="card-top">
+                            <span class="command-trigger">!lurk</span>
+                            <button class="copy-btn" data-copy="!lurk" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Acknowledges that you are lurking and supporting the stream in the background.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">Status</span>
+                        </div>
+                    </div>
+
+                    <!-- !socials -->
+                    <div class="command-card" data-command="!socials" data-keywords="socials links youtube bluesky twitter links media">
+                        <div class="card-top">
+                            <span class="command-trigger">!socials</span>
+                            <button class="copy-btn" data-copy="!socials" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Shows all official social media links for ItsMeJoji.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">Links</span>
+                        </div>
+                    </div>
+
+                    <!-- !discord -->
+                    <div class="command-card" data-command="!discord" data-keywords="discord server community chat join invite">
+                        <div class="card-top">
+                            <span class="command-trigger">!discord</span>
+                            <button class="copy-btn" data-copy="!discord" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Displays the instant invite link to join the stream Discord community.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">Community</span>
+                        </div>
+                    </div>
+
+                    <!-- !docket -->
+                    <div class="command-card" data-command="!docket" data-keywords="docket schedule plan stream week items games">
+                        <div class="card-top">
+                            <span class="command-trigger">!docket</span>
+                            <button class="copy-btn" data-copy="!docket" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Displays the link to the current weekly stream docket and schedule.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">Schedule</span>
+                        </div>
+                    </div>
+
+                    <!-- !shinyroll -->
+                    <div class="command-card" data-command="!shinyroll" data-keywords="shinyroll roll number 1 8192 rng luck odds">
+                        <div class="card-top">
+                            <span class="command-trigger">!shinyroll</span>
+                            <button class="copy-btn" data-copy="!shinyroll" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Rolls a random number from 1 to 8,192 to test your full-odds shiny luck!</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">RNG Game</span>
+                        </div>
+                    </div>
+
+                    <!-- !clip -->
+                    <div class="command-card" data-command="!clip" data-keywords="clip description marker highlight moment video global cooldown">
+                        <div class="card-top">
+                            <span class="command-trigger">!clip [description]</span>
+                            <button class="copy-btn" data-copy="!clip" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Creates a clip from the live stream and adds a stream marker. Optional description included.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-param">[description]</span>
+                            <span class="meta-tag tag-cooldown">Global Cooldown</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Friendship Checker Overlay Commands Section -->
+            <section class="section-block" data-section="overlay">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fa-solid fa-dragon"></i>
+                    </div>
+                    <h3 class="section-title">Friendship Checker Overlay Commands</h3>
+                    <span class="section-count">2 commands</span>
+                </div>
+
+                <div class="commands-grid">
+                    <!-- !checkpokemon -->
+                    <div class="command-card" data-command="!checkpokemon" data-keywords="checkpokemon pokemon active shiny speech bubble status friendship overlay">
+                        <div class="card-top">
+                            <span class="command-trigger">!checkpokemon</span>
+                            <button class="copy-btn" data-copy="!checkpokemon" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Displays your active Pokémon's name and shiny status in an on-stream speech bubble.</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-overlay">Overlay Interaction</span>
+                        </div>
+                    </div>
+
+                    <!-- !jump -->
+                    <div class="command-card" data-command="!jump" data-keywords="jump parade mode active pokemon bounce animate overlay">
+                        <div class="card-top">
+                            <span class="command-trigger">!jump</span>
+                            <button class="copy-btn" data-copy="!jump" title="Copy Command">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="command-desc">Makes your active Pokémon jump on screen during Parade Mode!</p>
+                        <div class="card-meta">
+                            <span class="meta-tag tag-overlay">Parade Mode</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- No Results Fallback -->
+        <div id="noResults" class="no-results">
+            <i class="fa-solid fa-ghost"></i>
+            <p>No commands matched your search criteria.</p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Stream Assets by ItsMeJoji • Interactive Twitch Stream Commands</p>
+        </footer>
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        (() => {
+            // Menu Logic
+            const body = document.body;
+            const toggle = document.querySelector('.menuToggle');
+            const menu = document.getElementById('menu');
+            const closeButton = menu?.querySelector('.close');
+            const overlay = document.getElementById('menu-overlay');
+
+            const closeMenu = () => body.classList.remove('is-menu-visible');
+            const openMenu = () => body.classList.add('is-menu-visible');
+
+            toggle?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (body.classList.contains('is-menu-visible')) closeMenu();
+                else openMenu();
+            });
+
+            closeButton?.addEventListener('click', closeMenu);
+            overlay?.addEventListener('click', closeMenu);
+            menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+            // Search & Category Filtering Logic
+            const searchInput = document.getElementById('searchInput');
+            const pillBtns = document.querySelectorAll('.pill-btn');
+            const commandCards = document.querySelectorAll('.command-card');
+            const sectionBlocks = document.querySelectorAll('.section-block');
+            const noResults = document.getElementById('noResults');
+
+            let currentCategory = 'all';
+
+            function filterCommands() {
+                const query = searchInput.value.toLowerCase().trim();
+                let visibleCountTotal = 0;
+
+                sectionBlocks.forEach(section => {
+                    const sectionCat = section.getAttribute('data-section');
+                    const matchesCategory = (currentCategory === 'all' || currentCategory === sectionCat);
+                    
+                    let visibleInSection = 0;
+                    const cards = section.querySelectorAll('.command-card');
+
+                    cards.forEach(card => {
+                        const cmdText = card.getAttribute('data-command').toLowerCase();
+                        const descText = card.querySelector('.command-desc').textContent.toLowerCase();
+                        const keywords = card.getAttribute('data-keywords').toLowerCase();
+
+                        const matchesQuery = !query || cmdText.includes(query) || descText.includes(query) || keywords.includes(query);
+
+                        if (matchesCategory && matchesQuery) {
+                            card.style.display = 'flex';
+                            visibleInSection++;
+                            visibleCountTotal++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    if (visibleInSection > 0) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+
+                if (visibleCountTotal === 0) {
+                    noResults.style.display = 'block';
+                } else {
+                    noResults.style.display = 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', filterCommands);
+
+            pillBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    pillBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCategory = btn.getAttribute('data-category');
+                    filterCommands();
+                });
+            });
+
+            // One-click Copy Command
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const textToCopy = btn.getAttribute('data-copy');
+                    try {
+                        await navigator.clipboard.writeText(textToCopy);
+                        btn.classList.add('copied');
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                        setTimeout(() => {
+                            btn.classList.remove('copied');
+                            btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy', err);
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
