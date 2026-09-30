@@ -15,6 +15,7 @@ const els = {
     columns: document.getElementById('columnCount'),
     rows: document.getElementById('rowCount'),
     backgroundColor: document.getElementById('backgroundColor'),
+    transparentBg: document.getElementById('transparentBg'),
     imageScale: document.getElementById('imageScale'),
     imageScaleValue: document.getElementById('imageScaleValue'),
     jitter: document.getElementById('jitterAmount'),
@@ -42,6 +43,7 @@ function getSettings() {
         columns: clampNumber(els.columns.value, 1, 24, 8),
         rows: clampNumber(els.rows.value, 1, 24, 5),
         backgroundColor: els.backgroundColor.value || '#ffffff',
+        transparentBg: els.transparentBg ? els.transparentBg.checked : true,
         imageScale: clampNumber(els.imageScale.value, 30, 115, 78) / 100,
         jitter: clampNumber(els.jitter.value, 0, 45, 14) / 100,
         rotation: clampNumber(els.rotation.value, 0, 35, 0),
@@ -58,6 +60,12 @@ function syncRangeLabels() {
     els.imageScaleValue.textContent = `${els.imageScale.value}%`;
     els.jitterValue.textContent = `${els.jitter.value}%`;
     els.rotationValue.textContent = `${els.rotation.value}\u00b0`;
+}
+
+function updateControlsState() {
+    if (els.backgroundColor && els.transparentBg) {
+        els.backgroundColor.disabled = els.transparentBg.checked;
+    }
 }
 
 function loadImageFromFile(file) {
@@ -203,8 +211,10 @@ function draw() {
 
     els.canvasMeta.textContent = `${settings.width} x ${settings.height}`;
     ctx.clearRect(0, 0, settings.width, settings.height);
-    ctx.fillStyle = settings.backgroundColor;
-    ctx.fillRect(0, 0, settings.width, settings.height);
+    if (!settings.transparentBg) {
+        ctx.fillStyle = settings.backgroundColor;
+        ctx.fillRect(0, 0, settings.width, settings.height);
+    }
 
     const cellWidth = settings.width / settings.columns;
     const cellHeight = settings.height / settings.rows;
@@ -305,20 +315,21 @@ function wireEvents() {
         els.columns,
         els.rows,
         els.backgroundColor,
+        els.transparentBg,
         els.imageScale,
         els.jitter,
         els.rotation,
         els.allowRepeats
     ].forEach((input) => {
+        if (!input) return;
         input.addEventListener('input', () => {
             syncRangeLabels();
+            updateControlsState();
             draw();
         });
-    });
-
-    [els.columns, els.rows, els.allowRepeats].forEach((input) => {
         input.addEventListener('change', () => {
-            rollPlacements();
+            syncRangeLabels();
+            updateControlsState();
             draw();
         });
     });
@@ -335,6 +346,7 @@ function wireEvents() {
 
 function initialize() {
     syncRangeLabels();
+    updateControlsState();
     renderAssetList();
     wireEvents();
     draw();

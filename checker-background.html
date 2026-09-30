@@ -497,7 +497,14 @@
             display: block;
             max-width: 100%;
             height: auto;
-            background: #fff;
+            background-color: #ffffff;
+            background-image:
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
             box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
             image-rendering: auto;
         }
@@ -622,8 +629,13 @@
 
                 <div class="field">
                     <label for="backgroundColor">Background Color</label>
-                    <input id="backgroundColor" type="color" value="#ffffff" />
+                    <input id="backgroundColor" type="color" value="#ffffff" disabled />
                 </div>
+
+                <label class="toggle-line">
+                    <input id="transparentBg" type="checkbox" checked />
+                    Transparent background
+                </label>
 
                 <div class="field">
                     <div class="range-head">
