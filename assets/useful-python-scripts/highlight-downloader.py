@@ -5,8 +5,8 @@ from datetime import datetime
 import requests
 
 # --- CONFIGURATION ---
-TWITCH_CLIENT_ID = "os1f0kantdcssuh8kfbher7afiw78j"
-TWITCH_CLIENT_SECRET = "2mkmw0qbr22w4gcxva1eupm02sw44v"
+TWITCH_CLIENT_ID = "[CLIENT_ID]"
+TWITCH_CLIENT_SECRET = "[CLIENT_SECRET]"
 TARGET_CHANNEL = "itsmejoji"
 OUTPUT_DIR = "Highlights"  # Keeps clips isolated in their own folder
 
